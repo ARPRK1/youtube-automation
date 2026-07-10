@@ -2,7 +2,8 @@ import 'dotenv/config';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { getTodayNiche, pickTopic } from './niches.js';
+import { getTodayNiche } from './niches.js';
+import { pickTrendingTopic } from './lib/trends.js';
 import { writeLongScript, writeShortScripts } from './lib/script-writer.js';
 import { synthesizeSpeech } from './lib/tts.js';
 import { parseSrt, splitIntoShortLines, writeSrt } from './lib/srt.js';
@@ -62,6 +63,9 @@ async function produceVideo({ kind, title, narration, description, tags, seed, a
     if (durationHint === 'long' && durationSec < 480) {
       throw new Error(`Narration too short for a long-form video: ${durationSec.toFixed(1)}s (need 8+ min)`);
     }
+    if (durationHint === 'short' && durationSec > 59) {
+      throw new Error(`Narration too long for a Short: ${durationSec.toFixed(1)}s (must be <=59s or YouTube won't classify it as a Short)`);
+    }
 
     const bgPath = path.join(outDir, `${baseName}-bg.mp4`);
     const tmpImagePath = path.join(outDir, `${baseName}-src.jpg`);
@@ -112,11 +116,11 @@ async function runFull() {
   const longScripts = [];
 
   for (let i = 0; i < LONG_COUNT; i++) {
-    const topic = pickTopic(niche, today, i);
-    log(`Writing long script #${i + 1}: ${topic}`);
+    const topicInfo = await pickTrendingTopic(niche, today, i);
+    log(`Writing long script #${i + 1} [${topicInfo.source}]: ${topicInfo.topic}`);
     try {
-      const script = await writeLongScript(niche, topic);
-      longScripts.push({ topic, script });
+      const script = await writeLongScript(niche, topicInfo);
+      longScripts.push({ topicInfo, script });
       const entry = await produceVideo({
         kind: 'long',
         title: script.title,
@@ -127,38 +131,40 @@ async function runFull() {
         aspect: 'landscape',
         durationHint: 'long'
       });
+      entry.topicSource = topicInfo.source;
       manifest.videos.push(entry);
     } catch (err) {
-      log(`FAILED (long script #${i + 1}, topic "${topic}"): ${err.message}`);
-      manifest.videos.push({ kind: 'long', title: topic, error: err.message });
+      log(`FAILED (long script #${i + 1}, topic "${topicInfo.topic}"): ${err.message}`);
+      manifest.videos.push({ kind: 'long', title: topicInfo.topic, topicSource: topicInfo.source, error: err.message });
     }
   }
 
   if (longScripts.length > 0) {
     const perLong = Math.ceil(SHORT_COUNT / longScripts.length);
     let shortsMade = 0;
-    for (const { topic, script } of longScripts) {
+    for (const { topicInfo, script } of longScripts) {
       if (shortsMade >= SHORT_COUNT) break;
       const want = Math.min(perLong, SHORT_COUNT - shortsMade);
       try {
-        const shorts = await writeShortScripts(niche, topic, script, want);
+        const shorts = await writeShortScripts(niche, topicInfo, script, want);
         for (const [idx, short] of shorts.entries()) {
           const entry = await produceVideo({
             kind: 'short',
             title: short.title,
             narration: short.narration,
-            description: `${short.title}\n\nFrom our video: ${script.title}`,
-            tags: script.tags,
-            seed: `short-${topic}-${idx}-${dateStr}`,
+            description: `${short.description}\n\nFrom our video: ${script.title}`,
+            tags: [...new Set([...(short.hashtags || []), ...script.tags])].slice(0, 15),
+            seed: `short-${topicInfo.topic}-${idx}-${dateStr}`,
             aspect: 'vertical',
             durationHint: 'short'
           });
+          entry.topicSource = topicInfo.source;
           manifest.videos.push(entry);
           shortsMade++;
         }
       } catch (err) {
-        log(`FAILED (shorts for topic "${topic}"): ${err.message}`);
-        manifest.videos.push({ kind: 'short', title: `shorts for ${topic}`, error: err.message });
+        log(`FAILED (shorts for topic "${topicInfo.topic}"): ${err.message}`);
+        manifest.videos.push({ kind: 'short', title: `shorts for ${topicInfo.topic}`, topicSource: topicInfo.source, error: err.message });
       }
     }
   }

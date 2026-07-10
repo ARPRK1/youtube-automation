@@ -4,17 +4,27 @@ A small, free, token-free daily pipeline: writes a script (Groq/Gemini free tier
 
 Daily output: **2 long-form videos (10+ min) + 4 Shorts** for that day's niche (6 uploads/day total — YouTube's free API quota is 10,000 units/day and an upload costs 1,600 units, so 6/day is the safe ceiling without requesting a quota increase).
 
-Niche rotates by day of week — see `niches.js`:
+Content is **India-focused by default**, except where the subject is inherently global (AI). Niche rotates by day of week — see `niches.js`:
 
 | Day | Niche |
 |---|---|
-| Mon | Stock Market & Finance |
-| Tue | AI & Education |
-| Wed | Mystery & History |
-| Thu | Food & Culture |
-| Fri | Tourism & Places |
-| Sat | Movies, Sports & Entertainment |
-| Sun | Week Updates, Trending & News |
+| Mon | Indian Stock Market & Finance |
+| Tue | AI & Education (global) |
+| Wed | Indian Mystery & History |
+| Thu | Indian Food & Culture |
+| Fri | Indian Tourism & Places |
+| Sat | Bollywood, Cricket & Entertainment |
+| Sun | India Week Updates & Trending |
+
+### How today's topic is chosen
+
+Each run calls `lib/trends.js`, which pulls a **real, current topic** for the day's niche — free, no API key, no LLM tokens spent:
+
+- Mon–Sat: searches Google News (`hl=en-IN&gl=IN`) using that niche's rotating query set (e.g. "Nifty Sensex news", "Bollywood news today") and takes today's top real headline as the topic, with the next few headlines passed to the script writer as factual grounding.
+- Sunday: pulls Google's live "Trending Now" feed for India directly — whatever India is actually searching for right now becomes the topic.
+- If either live lookup fails (network blip, feed down), it falls back to a curated per-niche topic bank in `niches.js` so a bad day for Google's RSS feeds can never block the job. `output/<date>/manifest.json` records which source (`google-news` / `google-trends` / `fallback-bank`) was actually used for each video.
+
+Every video's description gets 3-6 relevant hashtags generated alongside the title/tags (Shorts always forcibly include `#Shorts`, since that's what routes an upload into the Shorts shelf — not left to the model).
 
 ## One-time setup (all free)
 
