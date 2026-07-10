@@ -1,0 +1,19 @@
+{
+  "name": "youtube-automation",
+  "version": "1.0.0",
+  "description": "Free, token-free daily YouTube pipeline: script -> voice -> visuals -> upload",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node orchestrator.js",
+    "dry-run": "node orchestrator.js --dry-run",
+    "auth:youtube": "node scripts/get-youtube-refresh-token.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "googleapis": "^144.0.0"
+  }
+}
