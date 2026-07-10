@@ -23,6 +23,19 @@ const outDir = path.join('output', dateStr);
 
 function log(...args) { console.log(`[${new Date().toISOString()}]`, ...args); }
 
+const INDIA_REGIONS = new Set(['IN', 'IN-trending']);
+function withRegion(text, region) {
+  if (!INDIA_REGIONS.has(region)) return text;
+  if (/india|indian|bollywood|mumbai|delhi|nifty|sensex/i.test(text)) return text;
+  return `India ${text}`;
+}
+
+function creditsBlock(credits) {
+  const unique = [...new Set(credits)].slice(0, 8);
+  if (unique.length === 0) return '';
+  return `\n\nVisuals:\n${unique.map((c) => `- ${c}`).join('\n')}`;
+}
+
 async function runDryRun() {
   const niche = getTodayNiche(today);
   log(`Today's niche: ${niche.name}`);
@@ -44,7 +57,7 @@ async function runDryRun() {
 }
 
 /** Renders one video (long or short) end-to-end and returns a manifest entry. */
-async function produceVideo({ kind, title, narration, description, tags, seed, aspect, durationHint }) {
+async function produceVideo({ kind, title, narration, description, tags, seed, aspect, durationHint, chapters, topic, region }) {
   const baseName = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60) || `${kind}-${seed}`;
   const entry = { kind, title, baseName, steps: {} };
 
@@ -68,9 +81,17 @@ async function produceVideo({ kind, title, narration, description, tags, seed, a
     }
 
     const bgPath = path.join(outDir, `${baseName}-bg.mp4`);
-    const tmpImagePath = path.join(outDir, `${baseName}-src.jpg`);
-    await renderBackgroundClip({ topic: title, seed, durationSec, aspect, outPath: bgPath, tmpImagePath });
+    const chapterList = chapters && chapters.length > 0 ? chapters : [{ title }];
+    const segDur = durationSec / chapterList.length;
+    const segments = chapterList.map((c) => ({
+      query: withRegion(c.title, region),
+      fallbackQuery: withRegion(topic || title, region),
+      durationSec: segDur
+    }));
+    const { credits } = await renderBackgroundClip({ segments, aspect, outPath: bgPath });
     entry.steps.visuals = 'ok';
+    entry.visualCredits = credits;
+    if (credits.length > 0) description = `${description}${creditsBlock(credits)}`;
 
     const finalPath = path.join(outDir, `${baseName}.mp4`);
     await renderFinalVideo({ backgroundClipPath: bgPath, audioPath, srtPath: captionSrtPath, outPath: finalPath });
@@ -129,7 +150,10 @@ async function runFull() {
         tags: script.tags,
         seed: `long-${i}-${dateStr}`,
         aspect: 'landscape',
-        durationHint: 'long'
+        durationHint: 'long',
+        chapters: script.chapters,
+        topic: topicInfo.topic,
+        region: niche.region
       });
       entry.topicSource = topicInfo.source;
       manifest.videos.push(entry);
@@ -156,7 +180,9 @@ async function runFull() {
             tags: [...new Set([...(short.hashtags || []), ...script.tags])].slice(0, 15),
             seed: `short-${topicInfo.topic}-${idx}-${dateStr}`,
             aspect: 'vertical',
-            durationHint: 'short'
+            durationHint: 'short',
+            topic: topicInfo.topic,
+            region: niche.region
           });
           entry.topicSource = topicInfo.source;
           manifest.videos.push(entry);

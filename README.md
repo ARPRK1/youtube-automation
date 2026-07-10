@@ -26,6 +26,20 @@ Each run calls `lib/trends.js`, which pulls a **real, current topic** for the da
 
 Every video's description gets 3-6 relevant hashtags generated alongside the title/tags (Shorts always forcibly include `#Shorts`, since that's what routes an upload into the Shorts shelf — not left to the model).
 
+### Visuals
+
+Each long-form video is built from several contextual visual segments — one per script chapter, not a single static background for the whole video. `lib/visual-sources.js` tries, in order, per segment:
+
+1. **Pexels video** (real b-roll) — needs a free `PEXELS_API_KEY`.
+2. **Pexels photo** (Ken Burns pan/zoom) — same key.
+3. **Openverse** (no key — aggregates Flickr/museum collections under CC licenses).
+4. **Wikimedia Commons** (no key — strong for heritage, monuments, historical topics; weaker for modern/abstract ones like finance charts).
+5. A generated gradient background, if nothing relevant was found anywhere.
+
+The two no-key sources are filtered to licenses that permit commercial use and derivatives, and a title-relevance check rejects technically-licensed-but-off-topic results (this caught real cases in testing — e.g. a "stock market" query once matched an unrelated climate-protest photo just because "finance" appeared in its metadata). Any CC-licensed asset that *is* used gets credited automatically in the video description, since most of these licenses require attribution — Pexels' own license needs none.
+
+**Strongly recommended:** add a free `PEXELS_API_KEY` (https://www.pexels.com/api/, no cost ever). Without it, modern/abstract topics (finance, AI, entertainment) will often fall back to a plain gradient since Openverse/Wikimedia coverage for those is thin — heritage/food/tourism topics look good either way.
+
 ## One-time setup (all free)
 
 ### 1. Script generation — Groq and/or Gemini API key
