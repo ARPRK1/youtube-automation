@@ -28,17 +28,19 @@ Every video's description gets 3-6 relevant hashtags generated alongside the tit
 
 ### Visuals
 
-Each long-form video is built from several contextual visual segments — one per script chapter, not a single static background for the whole video. `lib/visual-sources.js` tries, in order, per segment:
+Each long-form video is built from several contextual visual segments — one per script chapter, not a single static background for the whole video. `lib/visuals.js` tries, in order, per segment:
 
-1. **Pexels video** (real b-roll) — needs a free `PEXELS_API_KEY`.
-2. **Pexels photo** (Ken Burns pan/zoom) — same key.
-3. **Openverse** (no key — aggregates Flickr/museum collections under CC licenses).
-4. **Wikimedia Commons** (no key — strong for heritage, monuments, historical topics; weaker for modern/abstract ones like finance charts).
-5. A generated gradient background, if nothing relevant was found anywhere.
+1. **AI-generated image** (`lib/ai-image.js`, via Pollinations.ai — free, no key, runs on their servers so no GPU needed here). This is the primary source: the chapter title becomes the image prompt directly, so relevance is guaranteed by construction instead of hoping a search engine finds something close. This replaced an earlier stock-photo-search-only approach that repeatedly returned wrong/irrelevant or even inappropriate images (e.g. a cricket-recap video once got a funeral-ghat photo just from loose keyword overlap).
+2. **Stock photo/video fallback** (`lib/visual-sources.js`) only if AI generation is unavailable/slow/erroring — Pollinations is a free community service with no uptime guarantee. Falls through Pexels video → Pexels photo (needs a free `PEXELS_API_KEY`) → Openverse → Wikimedia Commons (both no-key, filtered to commercially-safe licenses, with the same title-relevance check).
+3. A generated gradient, if nothing worked anywhere — a segment can never fail outright.
 
-The two no-key sources are filtered to licenses that permit commercial use and derivatives, and a title-relevance check rejects technically-licensed-but-off-topic results (this caught real cases in testing — e.g. a "stock market" query once matched an unrelated climate-protest photo just because "finance" appeared in its metadata). Any CC-licensed asset that *is* used gets credited automatically in the video description, since most of these licenses require attribution — Pexels' own license needs none.
+CC-licensed stock assets that *are* used (fallback path only) get credited automatically in the description, since most of those licenses require attribution. AI images and Pexels need none.
 
-**Strongly recommended:** add a free `PEXELS_API_KEY` (https://www.pexels.com/api/, no cost ever). Without it, modern/abstract topics (finance, AI, entertainment) will often fall back to a plain gradient since Openverse/Wikimedia coverage for those is thin — heritage/food/tourism topics look good either way.
+**Optional but recommended:** add a free `PEXELS_API_KEY` (https://www.pexels.com/api/) purely as a stronger fallback layer if Pollinations has a bad day — not required for normal operation anymore.
+
+### Animated intro (Remotion)
+
+Each long-form video gets a short (~2.8s) animated title card before the narration starts — niche label and title, kinetic-text entrance, niche-specific accent color (see `accentColor` per niche in `niches.js`) — built with [Remotion](https://remotion.dev) (`remotion/IntroCard.jsx`, rendered via `lib/intro.js`). Remotion is free for individual/small-team use, runs on plain Node + headless Chromium (CPU only, no GPU needed) — but its renderer has **no Windows-on-ARM build**, so it cannot be tested on that class of machine; it's expected to work normally on GitHub Actions' standard Linux runners. If the intro render or splice fails for any reason, that single video falls back to shipping without the intro rather than failing the whole video — check `steps.intro` in `manifest.json` to see whether it actually rendered. Shorts skip the intro entirely (a title card would eat into the 59s budget and works against a Short's "hook in the first 2 seconds" goal).
 
 ## One-time setup (all free)
 
@@ -93,12 +95,17 @@ Videos upload as **unlisted** by default (`YOUTUBE_PRIVACY_STATUS=unlisted`). On
 ## Architecture
 
 ```
-niches.js              day-of-week -> niche + topic bank
+niches.js              day-of-week -> niche + topic bank + accent color
+lib/trends.js            Google News/Trends -> today's real topic per niche (free, no key)
 lib/script-writer.js   Groq/Gemini -> narration + title/description/tags (never Claude)
 lib/tts.js              edge-tts -> mp3 + word-timed .srt (free, no key)
 lib/srt.js              SRT parsing helpers
-lib/visuals.js           Ken Burns over a free stock photo, or generated gradient
-lib/assemble.js          mux narration + background + burned-in captions -> final mp4
+lib/ai-image.js          Pollinations.ai -> AI image per chapter (free, no key, no GPU needed)
+lib/visual-sources.js    Pexels/Openverse/Wikimedia fallback if AI image generation fails
+lib/visuals.js           builds the per-chapter background clip (AI image -> stock -> gradient)
+remotion/                animated title-card intro (React/Remotion components)
+lib/intro.js             bundles + renders the Remotion intro
+lib/assemble.js          mux narration + background + captions, prepend intro -> final mp4
 lib/thumbnail.js         ffmpeg-generated thumbnail, no external service
 lib/youtube-upload.js    real YouTube Data API v3 upload (googleapis, OAuth refresh token)
 orchestrator.js          ties it together, writes output/<date>/manifest.json

@@ -23,14 +23,21 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install ffmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install ffmpeg and Chromium system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+            libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+            libgbm1 libasound2t64 libpango-1.0-0 libcairo2
 
       - name: Install edge-tts
         run: pip install edge-tts
 
       - name: Install Node dependencies
         run: npm install
+
+      - name: Install Chromium dependencies for Remotion
+        run: npx remotion browser ensure
 
       - name: Generate and upload today's videos
         run: node orchestrator.js

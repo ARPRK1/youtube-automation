@@ -8,7 +8,8 @@ import { writeLongScript, writeShortScripts } from './lib/script-writer.js';
 import { synthesizeSpeech } from './lib/tts.js';
 import { parseSrt, splitIntoShortLines, writeSrt } from './lib/srt.js';
 import { renderBackgroundClip } from './lib/visuals.js';
-import { renderFinalVideo } from './lib/assemble.js';
+import { renderFinalVideo, prependIntro } from './lib/assemble.js';
+import { renderIntro } from './lib/intro.js';
 import { renderThumbnail } from './lib/thumbnail.js';
 import { uploadVideo, hasYoutubeCredentials } from './lib/youtube-upload.js';
 import { probeDurationSeconds } from './lib/ffmpeg-util.js';
@@ -57,7 +58,7 @@ async function runDryRun() {
 }
 
 /** Renders one video (long or short) end-to-end and returns a manifest entry. */
-async function produceVideo({ kind, title, narration, description, tags, seed, aspect, durationHint, chapters, topic, region }) {
+async function produceVideo({ kind, title, narration, description, tags, seed, aspect, durationHint, chapters, topic, region, niche }) {
   const baseName = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60) || `${kind}-${seed}`;
   const entry = { kind, title, baseName, steps: {} };
 
@@ -93,9 +94,29 @@ async function produceVideo({ kind, title, narration, description, tags, seed, a
     entry.visualCredits = credits;
     if (credits.length > 0) description = `${description}${creditsBlock(credits)}`;
 
-    const finalPath = path.join(outDir, `${baseName}.mp4`);
+    let finalPath = path.join(outDir, `${baseName}.mp4`);
     await renderFinalVideo({ backgroundClipPath: bgPath, audioPath, srtPath: captionSrtPath, outPath: finalPath });
     entry.steps.assemble = 'ok';
+
+    // Animated title-card intro is a polish layer, only for long-form
+    // videos (a 2-3s intro would eat into a Short's <=59s budget and works
+    // against the "hook in the first 2 seconds" goal of a Short anyway).
+    // A failure here must not fail the whole video -- fall back to the
+    // intro-less cut, which is already a complete, uploadable video.
+    if (durationHint === 'long' && niche?.accentColor) {
+      try {
+        const introPath = path.join(outDir, `${baseName}-intro.mp4`);
+        await renderIntro({ title, niche: niche.name, accentColor: niche.accentColor, aspect, outPath: introPath });
+        const [w, h] = aspect === 'vertical' ? [1080, 1920] : [1920, 1080];
+        const withIntroPath = path.join(outDir, `${baseName}-with-intro.mp4`);
+        await prependIntro({ introPath, mainPath: finalPath, outPath: withIntroPath, width: w, height: h });
+        finalPath = withIntroPath;
+        entry.steps.intro = 'ok';
+      } catch (err) {
+        entry.steps.intro = `failed: ${err.message}`;
+        console.warn(`[orchestrator] intro render/prepend failed for "${title}", continuing without it: ${err.message}`);
+      }
+    }
     entry.videoPath = finalPath;
 
     const thumbPath = path.join(outDir, `${baseName}-thumb.jpg`);
@@ -153,7 +174,8 @@ async function runFull() {
         durationHint: 'long',
         chapters: script.chapters,
         topic: topicInfo.topic,
-        region: niche.region
+        region: niche.region,
+        niche
       });
       entry.topicSource = topicInfo.source;
       manifest.videos.push(entry);

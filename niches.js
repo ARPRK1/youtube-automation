@@ -10,6 +10,7 @@ export const NICHE_BY_WEEKDAY = {
     name: 'Indian Stock Market & Finance',
     audience: 'Indian retail investors and young professionals building wealth',
     region: 'IN',
+    accentColor: '#2a9d8f',
     searchQueries: [
       'Indian stock market today',
       'Nifty Sensex news',
@@ -32,6 +33,7 @@ export const NICHE_BY_WEEKDAY = {
     name: 'AI & Education',
     audience: 'Students, lifelong learners, and tech-curious professionals worldwide',
     region: 'global',
+    accentColor: '#4361ee',
     searchQueries: [
       'AI news today',
       'new AI tool launch',
@@ -54,6 +56,7 @@ export const NICHE_BY_WEEKDAY = {
     name: 'Indian Mystery & History',
     audience: 'Indian history buffs and true-mystery/documentary fans',
     region: 'IN',
+    accentColor: '#9d4edd',
     searchQueries: [
       'unsolved mystery India',
       'Indian history discovery',
@@ -76,6 +79,7 @@ export const NICHE_BY_WEEKDAY = {
     name: 'Indian Food & Culture',
     audience: 'Indian home cooks, travelers, and culture enthusiasts',
     region: 'IN',
+    accentColor: '#f77f00',
     searchQueries: [
       'Indian food trend news',
       'Indian festival celebration',
@@ -98,6 +102,7 @@ export const NICHE_BY_WEEKDAY = {
     name: 'Indian Tourism & Places',
     audience: 'Travelers and armchair explorers interested in India',
     region: 'IN',
+    accentColor: '#06a77d',
     searchQueries: [
       'India travel destination',
       'hidden gem place India',
@@ -120,6 +125,7 @@ export const NICHE_BY_WEEKDAY = {
     name: 'Bollywood, Cricket & Entertainment',
     audience: 'Indian movie fans, cricket fans, and pop-culture followers',
     region: 'IN',
+    accentColor: '#e63946',
     searchQueries: [
       'Bollywood news today',
       'India cricket news',
@@ -142,6 +148,7 @@ export const NICHE_BY_WEEKDAY = {
     name: 'India Week Updates & Trending',
     audience: 'Indian audience wanting a quick, sharp recap of the week',
     region: 'IN-trending',
+    accentColor: '#ffb703',
     searchQueries: [
       'India news this week',
       'India trending today'
