@@ -1,0 +1,65 @@
+# Edit this file to control the daily job. No code changes needed for any
+# of these settings. Comments explain what each one does.
+
+video:
+  # How many long-form and Short videos to make per day. Kept at 6 total
+  # (2 + 4) because YouTube's free upload quota is 10,000 units/day and
+  # each upload costs 1,600 units -- 6/day is the safe ceiling without
+  # requesting a quota increase from Google.
+  long_count_per_day: 2
+  long_min_minutes: 5
+  long_max_minutes: 15
+  shorts_count_per_day: 4
+  # YouTube's Shorts limit is 3 minutes (180s) as of 2026, but shorter
+  # tends to perform better -- keep these punchy.
+  shorts_max_seconds: 120
+
+voice:
+  # "edge-tts" (Microsoft neural voices, proven, fast) or "kokoro"
+  # (open-source, CPU-only, Apache 2.0) -- see VOICE_COMPARISON.md once
+  # generated for a quality comparison between the two.
+  provider: edge-tts
+  edge_tts_voice: en-US-AndrewNeural
+  kokoro_voice: af_heart
+
+topics:
+  # Fully trending-topic-driven -- no fixed subject per day of week.
+  # Picks whatever scores highest across all free sources each run.
+  mode: topic-agnostic
+  avoid_repeat_days: 30
+  sources:
+    google_trends_india: true
+    google_news: true
+    youtube_trending: true
+    # Reddit's free JSON endpoint no longer works without a registered,
+    # manually-approved OAuth app (confirmed live -- returns 403 as of
+    # 2026). Off for now; flip on once you have an approved Reddit app.
+    reddit: false
+
+script:
+  min_long_words: 700   # ~5 min at 140wpm
+  target_long_words: 1600  # ~11-12 min at 140wpm
+  words_per_minute: 140
+  # Script structures rotated day to day so videos don't look templated
+  # (see script/structure-history.json, auto-maintained).
+  structures: [story-led, question-led, countdown, mystery]
+
+media:
+  min_resolution_landscape: [1920, 1080]
+  min_resolution_vertical: [1080, 1920]
+  # Licenses accepted from Wikimedia/Openverse. AI-generated and Pexels/
+  # Pixabay assets don't need attribution and aren't subject to this list.
+  allowed_licenses: [pd, cc0, by, by-sa]
+  ai_fallback_enabled: true
+  # Vision-based relevance check on every downloaded asset before it's
+  # accepted (uses Gemini's free vision tier). Adds real time per run but
+  # is the actual fix for wrong/irrelevant images.
+  verify_relevance: true
+
+upload:
+  enabled: true
+  privacy_status: unlisted
+
+paths:
+  runs_dir: runs
+  ready_to_upload_dir: ready_to_upload

@@ -1,4 +1,6 @@
 node_modules/
 .env
 output/
+runs/
+ready_to_upload/
 *.log
