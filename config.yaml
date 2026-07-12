@@ -37,9 +37,15 @@ topics:
     reddit: false
 
 script:
-  min_long_words: 700   # ~5 min at 140wpm
-  target_long_words: 1600  # ~11-12 min at 140wpm
-  words_per_minute: 140
+  # Real edge-tts output measured at ~208 words/minute in production
+  # testing (762 words -> 219.7s), well above the 140wpm textbook
+  # average this was originally calibrated against -- that mismatch let
+  # a 700-word script (assumed ~5min) actually land at ~3.7min of real
+  # audio, failing the long_min_minutes floor after the video was
+  # already fully scripted and voiced. Recalibrated with margin.
+  min_long_words: 950   # ~5 min at a conservative 190wpm floor
+  target_long_words: 1900  # ~9-10 min at ~200wpm
+  words_per_minute: 200
   # Script structures rotated day to day so videos don't look templated
   # (see script/structure-history.json, auto-maintained).
   structures: [story-led, question-led, countdown, mystery]
