@@ -52,10 +52,18 @@ jobs:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
 
-      - name: Upload output as build artifact
+      - name: Upload run output as build artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: videos-${{ github.run_id }}
-          path: output/**
+          # The 6-stage pipeline writes to runs/<date>/ (scripts, research,
+          # manifest, rendered clips) and ready_to_upload/<date>/ (anything
+          # that failed the quality gate or upload) -- the old output/**
+          # path was left over from before that restructure and silently
+          # uploaded nothing ("No files were found with the provided
+          # path"), confirmed live on the first real Actions run.
+          path: |
+            runs/**
+            ready_to_upload/**
           retention-days: 14
