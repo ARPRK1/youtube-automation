@@ -95,6 +95,7 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
     const audioPaths = [];
     const segmentCaptions = [];
     const mediaAssets = [];
+    const usedMediaUrls = new Set();
 
     for (const [i, seg] of videoScript.segments.entries()) {
       const { audioPath, srtPath, durationSec, hadPause } = await synthesizeSegmentAudio(seg.text, runDir, `${baseName}-seg${i}`);
@@ -103,7 +104,7 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
       const lines = await buildSegmentCaptions({ srtPath, text: seg.text, durationSec, outPath: capSrtPath });
       segmentCaptions.push({ lines, durationSec });
 
-      const asset = await sourceMediaForSegment(seg, aspect, runDir, i);
+      const asset = await sourceMediaForSegment(seg, aspect, runDir, i, usedMediaUrls);
       mediaAssets.push({ ...asset, segmentIndex: i, durationSec, seed: `${baseName}-${i}`, hadPause });
     }
     entry.steps.tts = 'ok';
