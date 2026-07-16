@@ -18,6 +18,12 @@ import { uploadVideo, hasYoutubeCredentials } from './lib/youtube-upload.js';
 import { probeDurationSeconds } from './lib/ffmpeg-util.js';
 
 const DRY_RUN = process.argv.includes('--dry-run');
+// Backfill knobs: --long-only skips the shorts batch (used to catch up on
+// missed long-form videos without also duplicating that day's shorts);
+// --long-count=N overrides config.video.long_count_per_day for one run.
+const LONG_ONLY = process.argv.includes('--long-only');
+const longCountArg = process.argv.find((a) => a.startsWith('--long-count='));
+const LONG_COUNT_OVERRIDE = longCountArg ? parseInt(longCountArg.split('=')[1], 10) : null;
 const config = loadConfig();
 const today = new Date();
 const dateStr = today.toISOString().slice(0, 10);
@@ -240,7 +246,7 @@ async function runFull() {
   const manifest = { date: dateStr, topic: research.topic, videos: [] };
   const longScripts = [];
 
-  for (let i = 0; i < (config.video?.long_count_per_day ?? 2); i++) {
+  for (let i = 0; i < (LONG_COUNT_OVERRIDE ?? config.video?.long_count_per_day ?? 2); i++) {
     try {
       const script = await writeLongScript(research);
       longScripts.push(script);
@@ -253,7 +259,7 @@ async function runFull() {
     }
   }
 
-  if (longScripts.length > 0) {
+  if (!LONG_ONLY && longScripts.length > 0) {
     const shortCount = config.video?.shorts_count_per_day ?? 4;
     const perLong = Math.ceil(shortCount / longScripts.length);
     let made = 0;

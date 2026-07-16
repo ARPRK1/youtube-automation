@@ -4,7 +4,16 @@ on:
   schedule:
     # 03:33 UTC = 9:03am IST. Off the hour to avoid the midnight cron pile-up.
     - cron: '33 3 * * *'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      long_only:
+        description: 'Backfill mode: generate long-form videos only, skip shorts'
+        type: boolean
+        default: false
+      long_count:
+        description: 'Backfill mode: override number of long-form videos to generate (blank = config default)'
+        type: string
+        default: ''
 
 jobs:
   generate:
@@ -40,7 +49,11 @@ jobs:
         run: npx remotion browser ensure
 
       - name: Generate and upload today's videos
-        run: node orchestrator.js
+        run: |
+          ARGS=""
+          if [ "${{ inputs.long_only }}" = "true" ]; then ARGS="$ARGS --long-only"; fi
+          if [ -n "${{ inputs.long_count }}" ]; then ARGS="$ARGS --long-count=${{ inputs.long_count }}"; fi
+          node orchestrator.js $ARGS
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
