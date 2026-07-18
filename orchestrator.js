@@ -136,13 +136,13 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
     await renderVisualTimeline({ items: mediaAssets, aspect, outPath: bgPath, seed: baseName });
     entry.steps.visuals = 'ok';
 
+    const [w, h] = aspect === 'vertical' ? [1080, 1920] : [1920, 1080];
     let finalPath = path.join(runDir, `${baseName}.mp4`);
-    await renderFinalVideo({ backgroundClipPath: bgPath, audioPath: fullAudioPath, srtPath: captionSrtPath, outPath: finalPath });
+    await renderFinalVideo({ backgroundClipPath: bgPath, audioPath: fullAudioPath, srtPath: captionSrtPath, outPath: finalPath, aspect, width: w, height: h });
     entry.steps.assemble = 'ok';
 
     if (kind === 'long') {
       try {
-        const [w, h] = aspect === 'vertical' ? [1080, 1920] : [1920, 1080];
         const introPath = path.join(runDir, `${baseName}-intro.mp4`);
         await renderIntro({ title: videoScript.title, niche: research.topic, accentColor: accentColorForTopic(research.topic), aspect, outPath: introPath });
         const withIntroPath = path.join(runDir, `${baseName}-with-intro.mp4`);
