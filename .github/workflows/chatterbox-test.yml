@@ -1,0 +1,65 @@
+name: Chatterbox voice clone test (manual, isolated)
+
+# Standalone validation for the Chatterbox TTS zero-shot voice-cloning
+# integration (lib/chatterbox-tts.js, scripts/chatterbox_server.py) -- NOT
+# wired into the daily job. Synthesizes a short throwaway phrase directly
+# in the cloned voice and uploads it so it can be listened to before this
+# ever touches a real video or the live channel.
+#
+# Replaces an earlier OpenVoice V2 attempt (tone-color conversion on top
+# of edge-tts output) that produced audio confirmed NOT to sound like the
+# target voice -- conversion only re-colors an existing recording's
+# timbre and leaves the source TTS's own accent/cadence untouched.
+# Chatterbox does true synthesis in the target voice instead.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test-clone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install torch (CPU) and Chatterbox
+        # Chatterbox's own pyproject.toml pins torch==2.6.0 /
+        # torchaudio==2.6.0 exactly -- installing both together from the
+        # CPU index (not letting torchaudio resolve separately/later) is
+        # what avoided the CUDA-linked torchaudio problem hit during the
+        # OpenVoice attempt. gradio is a hard pin in Chatterbox's deps but
+        # is only its demo UI -- installing the actual runtime deps
+        # manually and the package itself with --no-deps skips it.
+        run: |
+          pip install torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install librosa==0.11.0 s3tokenizer transformers==5.2.0 diffusers==0.29.0 \
+            conformer==0.3.2 safetensors==0.5.3 spacy-pkuseg pykakasi==2.3.0 pyloudnorm omegaconf
+          pip install "git+https://github.com/resemble-ai/Perth.git@master"
+          pip install chatterbox-tts --no-deps
+
+      - name: Synthesize a test phrase directly in the cloned voice
+        # A single stdin line is enough here: the server's `for line in
+        # sys.stdin` loop processes it and then exits cleanly on EOF once
+        # the pipe closes, same as the real (long-lived) usage but for
+        # exactly one request.
+        run: |
+          echo '{"text": "This is a quick test of the voice cloning pipeline before it ever touches a real video. If this sounds like me, the cloning is working.", "output": "/tmp/test-cloned.wav", "reference": "voice-sample/reference.wav"}' | python scripts/chatterbox_server.py | tee /tmp/server.log
+
+      - name: Upload cloned test clip
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chatterbox-test-output
+          path: |
+            /tmp/test-cloned.wav
+            /tmp/server.log
+          if-no-files-found: warn
+          retention-days: 7

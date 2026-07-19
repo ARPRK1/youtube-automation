@@ -15,20 +15,18 @@ video:
   shorts_max_seconds: 120
 
 voice:
-  # "edge-tts" (Microsoft neural voices, proven, fast) or "kokoro"
-  # (open-source, CPU-only, Apache 2.0) -- see VOICE_COMPARISON.md once
-  # generated for a quality comparison between the two.
+  # "edge-tts" (Microsoft neural voices, proven, fast), "kokoro"
+  # (open-source, CPU-only, Apache 2.0), or "chatterbox" (MIT-licensed
+  # zero-shot voice cloning -- true synthesis in the voice at
+  # reference_sample, not post-hoc conversion; OpenVoice's tone-color
+  # conversion was tried first and confirmed too weak a match). Switching
+  # to chatterbox is a deliberate choice, not a silent default -- it's
+  # new, unverified-in-production tech.
   provider: edge-tts
   edge_tts_voice: en-US-AndrewNeural
   kokoro_voice: af_heart
-  # Optional tone-color conversion on top of whichever provider above ran
-  # (see lib/voice-clone.js) -- re-colors the synthesized speech to match
-  # reference_sample via OpenVoice V2 (MIT license). Off by default: this
-  # is new, unverified-in-production tech and must be turned on
-  # deliberately, not silently change every video's voice.
-  clone_enabled: false
   reference_sample: voice-sample/reference.wav
-  clone_checkpoint_dir: checkpoints_v2/converter
+  chatterbox_exaggeration: 0.5
 
 topics:
   # Fully trending-topic-driven -- no fixed subject per day of week.
