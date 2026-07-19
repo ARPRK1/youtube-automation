@@ -1,0 +1,62 @@
+name: Voice clone test (manual, isolated)
+
+# Standalone validation for the OpenVoice V2 tone-color-conversion
+# integration (lib/voice-clone.js, scripts/voice_convert.py) -- NOT wired
+# into the daily job. Synthesizes a short throwaway phrase with edge-tts,
+# converts it to the cloned reference voice, and uploads both the
+# original and converted clips so they can be listened to and compared
+# before this ever touches a real video or the live channel.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test-clone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install edge-tts
+        run: pip install edge-tts
+
+      - name: Install torch (CPU) and OpenVoice
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          git clone --depth 1 https://github.com/myshell-ai/OpenVoice.git /tmp/OpenVoice
+          pip install -e /tmp/OpenVoice
+          pip install librosa==0.9.1 pydub soundfile whisper-timestamped
+
+      - name: Download OpenVoice V2 checkpoint
+        run: |
+          curl -L -o /tmp/checkpoints_v2.zip https://myshell-public-repo-host.s3.amazonaws.com/openvoice/checkpoints_v2_0417.zip
+          unzip -q /tmp/checkpoints_v2.zip -d .
+          ls -la checkpoints_v2/converter
+
+      - name: Synthesize a test phrase with edge-tts
+        run: |
+          echo "This is a quick test of the voice cloning pipeline before it ever touches a real video. If this sounds like me, the conversion is working." > /tmp/test.txt
+          python -m edge_tts --file /tmp/test.txt --voice en-US-AndrewNeural --write-media /tmp/test-original.mp3
+
+      - name: Run tone-color conversion
+        run: |
+          python scripts/voice_convert.py --input /tmp/test-original.mp3 --output /tmp/test-cloned.wav --reference voice-sample/reference.wav
+
+      - name: Upload original + converted clips
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-clone-test-output
+          path: |
+            /tmp/test-original.mp3
+            /tmp/test-cloned.wav
+          if-no-files-found: warn
+          retention-days: 7

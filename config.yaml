@@ -21,6 +21,14 @@ voice:
   provider: edge-tts
   edge_tts_voice: en-US-AndrewNeural
   kokoro_voice: af_heart
+  # Optional tone-color conversion on top of whichever provider above ran
+  # (see lib/voice-clone.js) -- re-colors the synthesized speech to match
+  # reference_sample via OpenVoice V2 (MIT license). Off by default: this
+  # is new, unverified-in-production tech and must be turned on
+  # deliberately, not silently change every video's voice.
+  clone_enabled: false
+  reference_sample: voice-sample/reference.wav
+  clone_checkpoint_dir: checkpoints_v2/converter
 
 topics:
   # Fully trending-topic-driven -- no fixed subject per day of week.
