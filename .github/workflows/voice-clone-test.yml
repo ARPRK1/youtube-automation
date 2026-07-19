@@ -33,11 +33,23 @@ jobs:
         run: pip install edge-tts
 
       - name: Install torch (CPU) and OpenVoice
+        # OpenVoice's own requirements.txt pins faster-whisper==0.9.0, which
+        # transitively pins av==10.0.0 -- that old av release's Cython
+        # source doesn't compile against the Cython version on this runner
+        # (pre-PEP noexcept-strict Cython vs. modern), and no prebuilt
+        # wheel for it matches this environment, so pip falls back to a
+        # source build that fails outright (confirmed live). Installing
+        # OpenVoice's actual dependencies at current versions (letting pip
+        # pick a modern, wheel-available av via faster-whisper) instead of
+        # its frozen 2023 pins sidesteps the broken build entirely. gradio
+        # is dropped -- that's OpenVoice's demo UI, unused by our headless
+        # conversion script.
         run: |
           pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy librosa pydub soundfile wavmark eng_to_ipa inflect unidecode \
+            whisper-timestamped faster-whisper pypinyin cn2an jieba langid openai python-dotenv
           git clone --depth 1 https://github.com/myshell-ai/OpenVoice.git /tmp/OpenVoice
-          pip install -e /tmp/OpenVoice
-          pip install librosa==0.9.1 pydub soundfile whisper-timestamped
+          pip install -e /tmp/OpenVoice --no-deps
 
       - name: Download OpenVoice V2 checkpoint
         run: |
