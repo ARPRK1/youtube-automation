@@ -32,6 +32,15 @@ def main():
     from openvoice import se_extractor
     from openvoice.api import ToneColorConverter
 
+    # OpenVoice's VAD step (via whisper_timestamped) calls torch.hub.load on
+    # snakers4/silero-vad without trust_repo=True, which prompts an
+    # interactive y/N confirmation on first use -- that blocks forever
+    # under CI (no stdin) rather than failing cleanly. Fetching it directly
+    # with trust_repo=True first caches it and marks it trusted, so the
+    # later implicit call inside get_se() doesn't prompt at all. Cheap to
+    # call every run: a no-op once already cached.
+    torch.hub.load(repo_or_dir='snakers4/silero-vad', model='silero_vad', trust_repo=True, onnx=False, force_reload=False)
+
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
     config_path = os.path.join(args.checkpoint_dir, 'config.json')
