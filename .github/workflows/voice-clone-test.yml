@@ -52,9 +52,14 @@ jobs:
           pip install -e /tmp/OpenVoice --no-deps
 
       - name: Download OpenVoice V2 checkpoint
+        # The old checkpoints_v2_0417.zip S3 bucket referenced in
+        # OpenVoice's own README no longer exists (confirmed live --
+        # NoSuchBucket). MyShell's HuggingFace repo has the same converter
+        # checkpoint and is live.
         run: |
-          curl -L -o /tmp/checkpoints_v2.zip https://myshell-public-repo-host.s3.amazonaws.com/openvoice/checkpoints_v2_0417.zip
-          unzip -q /tmp/checkpoints_v2.zip -d .
+          mkdir -p checkpoints_v2/converter
+          curl -L -o checkpoints_v2/converter/config.json https://huggingface.co/myshell-ai/OpenVoiceV2/resolve/main/converter/config.json
+          curl -L -o checkpoints_v2/converter/checkpoint.pth https://huggingface.co/myshell-ai/OpenVoiceV2/resolve/main/converter/checkpoint.pth
           ls -la checkpoints_v2/converter
 
       - name: Synthesize a test phrase with edge-tts
