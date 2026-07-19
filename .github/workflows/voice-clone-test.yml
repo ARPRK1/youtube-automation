@@ -45,7 +45,13 @@ jobs:
         # is dropped -- that's OpenVoice's demo UI, unused by our headless
         # conversion script.
         run: |
-          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          # torch and torchaudio MUST come from the same index in the same
+          # command -- installing torchaudio separately (or letting it
+          # resolve transitively via a later pip install) pulled the
+          # default PyPI (CUDA-linked) build instead of the CPU one,
+          # which then failed to dlopen libcudart on this CPU-only runner
+          # (confirmed live).
+          pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
           pip install numpy librosa pydub soundfile wavmark eng_to_ipa inflect unidecode \
             whisper-timestamped faster-whisper pypinyin cn2an jieba langid openai python-dotenv
           git clone --depth 1 https://github.com/myshell-ai/OpenVoice.git /tmp/OpenVoice
