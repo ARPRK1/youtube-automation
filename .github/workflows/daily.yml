@@ -70,13 +70,19 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: videos-${{ github.run_id }}
-          # The 6-stage pipeline writes to runs/<date>/ (scripts, research,
-          # manifest, rendered clips) and ready_to_upload/<date>/ (anything
-          # that failed the quality gate or upload) -- the old output/**
-          # path was left over from before that restructure and silently
-          # uploaded nothing ("No files were found with the provided
-          # path"), confirmed live on the first real Actions run.
-          path: |
-            runs/**
-            ready_to_upload/**
-          retention-days: 14
+          # Only ready_to_upload/** (final videos + thumbnails + metadata
+          # for anything that failed the quality gate or upload) -- this
+          # used to also include runs/** (every stage's intermediate
+          # files: per-segment audio clips, unfinished background renders,
+          # thumb sources, individual caption files -- ~15 files per video
+          # beyond the one that actually matters). That bloat, accumulated
+          # over 14 days of retention at ~1GB/run, blew through the
+          # account's Actions artifact storage quota outright and started
+          # failing artifact uploads entirely (confirmed live: "Artifact
+          # storage quota has been hit", with usage only recalculated
+          # every 6-12 hours after cleanup -- not something a same-run fix
+          # can route around). retention-days cut from 14 to 5 for the
+          # same reason: less accumulation, less chance of hitting this
+          # again.
+          path: ready_to_upload/**
+          retention-days: 5
