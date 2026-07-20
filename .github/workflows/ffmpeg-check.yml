@@ -1,0 +1,13 @@
+name: FFmpeg xfade capability check (manual, throwaway)
+on:
+  workflow_dispatch: {}
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Report version and xfade transitions
+        run: |
+          ffmpeg -version | head -3
+          ffmpeg -h filter=xfade 2>&1
