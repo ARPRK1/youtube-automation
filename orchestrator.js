@@ -225,11 +225,16 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
       entry.upload = { skipped: true, readyToUpload: true, reason: 'upload disabled or no credentials', path: videoDest };
     } else {
       try {
-        const privacyStatus = process.env.YOUTUBE_PRIVACY_STATUS || config.upload?.privacy_status || 'unlisted';
+        const privacyStatus = process.env.YOUTUBE_PRIVACY_STATUS || config.upload?.privacy_status || 'public';
         const uploadRes = await uploadVideo({
-          filePath: finalPath, title: videoScript.title, description, tags: videoScript.tags,
-          privacyStatus, thumbnailPath: thumbPath,
-          containsSyntheticMedia: anyAiGenerated
+          filePath: finalPath,
+          title: videoScript.title,
+          description,
+          tags: videoScript.tags,
+          privacyStatus,
+          thumbnailPath: thumbPath,
+          containsSyntheticMedia: anyAiGenerated,
+          kind
         });
         entry.upload = { ok: true, ...uploadRes };
         entry.steps.upload = 'ok';
@@ -339,7 +344,7 @@ async function runFull() {
           const shortScript = {
             title: short.title,
             description: short.description,
-            tags: [...new Set([...(short.hashtags || []), ...longScript.tags])].slice(0, 15),
+            tags: [...new Set([...(short.tags || []), ...(short.hashtags || []), ...(longScript.tags || []), 'Shorts'])].slice(0, 15),
             hashtags: short.hashtags,
             structure: longScript.structure,
             segments: [{ text: short.narration, visual_needs: short.visual_needs || [] }]

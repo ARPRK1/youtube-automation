@@ -2,8 +2,10 @@ name: Daily video generation
 
 on:
   schedule:
-    # 03:33 UTC = 9:03am IST. Off the hour to avoid the midnight cron pile-up.
-    - cron: '33 3 * * *'
+    # Peak India mobile evening window ( empirically better for Shorts
+    # discovery for IN audience). 13:30 UTC = 7:00pm IST.
+    # Off the hour to dodge the on-the-hour cron pile-up.
+    - cron: '30 13 * * *'
   workflow_dispatch:
     inputs:
       long_only:
@@ -65,7 +67,8 @@ jobs:
           # Hard-fail if OAuth is bound to any channel other than ModernMonkShot
           YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
           YOUTUBE_CHANNEL_HANDLE: modernmonkshot
-          YOUTUBE_PRIVACY_STATUS: ${{ vars.YOUTUBE_PRIVACY_STATUS || 'unlisted' }}
+          # Public is required for algorithm / YPP watch hours. Override only for testing.
+          YOUTUBE_PRIVACY_STATUS: ${{ vars.YOUTUBE_PRIVACY_STATUS || 'public' }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
 

@@ -1,84 +1,81 @@
-# Edit this file to control the daily job. No code changes needed for any
-# of these settings. Comments explain what each one does.
+# ModernMonk 90-day monetization config.
+# Target: YouTube Partner Program (1k subs + 4k watch hours OR 10M Shorts views / 90d).
+# Strategy: PUBLIC Shorts-first, niche coherence, NOT made-for-kids, food+money+history.
 
 video:
-  # How many long-form and Short videos to make per day. Kept at 6 total
-  # (2 + 4) because YouTube's free upload quota is 10,000 units/day and
-  # each upload costs 1,600 units -- 6/day is the safe ceiling without
-  # requesting a quota increase from Google.
-  long_count_per_day: 2
-  long_min_minutes: 5
-  long_max_minutes: 15
-  shorts_count_per_day: 4
-  # YouTube's Shorts limit is 3 minutes (180s) as of 2026, but shorter
-  # tends to perform better -- keep these punchy.
-  shorts_max_seconds: 120
+  # Shorts path is the realistic automation route to early views/subs.
+  # 1 long + 6 Shorts = 7 uploads/day * 1600 units = 11,200 — slightly over
+  # free 10k/day, so 1 long + 5 Shorts = 9,600 units (safe under 10k).
+  long_count_per_day: 1
+  long_min_minutes: 6
+  long_max_minutes: 12
+  shorts_count_per_day: 5
+  # Winning Shorts on this channel were 25–45s. Cap hard so scripts stay punchy.
+  shorts_max_seconds: 55
 
 voice:
-  # "edge-tts" (Microsoft neural voices, proven, fast), "kokoro"
-  # (open-source, CPU-only, Apache 2.0), or "chatterbox" (MIT-licensed
-  # zero-shot voice cloning -- true synthesis in the voice at
-  # reference_sample, not post-hoc conversion; OpenVoice's tone-color
-  # conversion was tried first and confirmed too weak a match). Switching
-  # to chatterbox is a deliberate choice, not a silent default -- it's
-  # new, unverified-in-production tech.
   provider: edge-tts
-  edge_tts_voice: en-US-AndrewNeural
+  edge_tts_voice: en-IN-NeerjaNeural
+  # en-IN voices convert better for India-topic content (audience is IN).
+  # Fallback if missing on runner: orchestrator/tts should still work with en-US.
   kokoro_voice: af_heart
   reference_sample: voice-sample/reference.wav
   chatterbox_exaggeration: 0.5
 
 topics:
-  # Fully trending-topic-driven -- no fixed subject per day of week.
-  # Picks whatever scores highest across all free sources each run.
-  mode: topic-agnostic
-  avoid_repeat_days: 30
+  # Focused mode: bias research toward niches that already got 500–1k+ views
+  # on this channel (food origin, money, history twist, places). Still uses
+  # live trends, but scores proven-niche candidates higher.
+  mode: growth-focused
+  avoid_repeat_days: 21
+  primary_niches:
+    - indian-food-story
+    - indian-money-simple
+    - india-history-twist
+    - india-place-secret
   sources:
     google_trends_india: true
     google_news: true
     youtube_trending: true
-    # Reddit's free JSON endpoint no longer works without a registered,
-    # manually-approved OAuth app (confirmed live -- returns 403 as of
-    # 2026). Off for now; flip on once you have an approved Reddit app.
     reddit: false
 
 script:
-  # Real edge-tts output measured at ~208 words/minute in production
-  # testing (762 words -> 219.7s), well above the 140wpm textbook
-  # average this was originally calibrated against -- that mismatch let
-  # a 700-word script (assumed ~5min) actually land at ~3.7min of real
-  # audio, failing the long_min_minutes floor after the video was
-  # already fully scripted and voiced. Recalibrated with margin.
-  min_long_words: 950   # ~5 min at a conservative 190wpm floor
-  target_long_words: 1900  # ~9-10 min at ~200wpm
+  min_long_words: 1000
+  target_long_words: 1600
+  # Shorts spoken length ~ 80–120 words at 200 wpm ≈ 25–35s
+  min_short_words: 70
+  max_short_words: 130
   words_per_minute: 200
-  # Script structures rotated day to day so videos don't look templated
-  # (see script/structure-history.json, auto-maintained).
   structures: [story-led, question-led, countdown, mystery]
+  # Inject growth hooks / CTA directives into LLM prompts
+  growth_mode: true
 
 media:
   min_resolution_landscape: [1920, 1080]
   min_resolution_vertical: [1080, 1920]
-  # Licenses accepted from Wikimedia/Openverse. AI-generated and Pexels/
-  # Pixabay assets don't need attribution and aren't subject to this list.
   allowed_licenses: [pd, cc0, by, by-sa]
   ai_fallback_enabled: true
-  # Vision-based relevance check on every downloaded asset before it's
-  # accepted (uses Gemini's free vision tier). Adds real time per run but
-  # is the actual fix for wrong/irrelevant images.
   verify_relevance: true
 
 upload:
   enabled: true
-  privacy_status: unlisted
-  # Hard guard: refuse to upload if the OAuth token is bound to any other
-  # channel. Prevents the multi-channel Google-account footgun where a
-  # token silently authorizes the personal default (e.g. ranapratapa4100)
-  # instead of the Brand Account (ModernMonk / @modernmonkshot).
-  # Override via env YOUTUBE_CHANNEL_ID if needed.
+  # CRITICAL: unlisted = zero algorithm. Public is required for growth.
+  privacy_status: public
+  # Never mark as made for kids (channel-level was killing reach/comments).
+  made_for_kids: false
+  # Education (27) is fine for long; Shorts often perform as Entertainment (24)
+  # or People & Blogs (22). We set per-kind in code.
+  category_id_long: '27'
+  category_id_short: '24'
   channel_id: UCv8n_ykbynzj6-gwdwX6loA
   channel_handle: modernmonkshot
 
 paths:
   runs_dir: runs
   ready_to_upload_dir: ready_to_upload
+
+growth:
+  # Soft targets used only for logging / daily report (not hard fails).
+  target_subs_90d: 1000
+  target_shorts_views_90d: 10000000
+  daily_shorts_view_goal: 120000
