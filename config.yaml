@@ -71,6 +71,13 @@ media:
 upload:
   enabled: true
   privacy_status: unlisted
+  # Hard guard: refuse to upload if the OAuth token is bound to any other
+  # channel. Prevents the multi-channel Google-account footgun where a
+  # token silently authorizes the personal default (e.g. ranapratapa4100)
+  # instead of the Brand Account (ModernMonk / @modernmonkshot).
+  # Override via env YOUTUBE_CHANNEL_ID if needed.
+  channel_id: UCv8n_ykbynzj6-gwdwX6loA
+  channel_handle: modernmonkshot
 
 paths:
   runs_dir: runs

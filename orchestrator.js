@@ -14,7 +14,7 @@ import { renderIntro } from './lib/intro.js';
 import { addBackgroundMusic } from './lib/music.js';
 import { renderThumbnail } from './lib/thumbnail.js';
 import { runQualityGate } from './lib/quality-gate.js';
-import { uploadVideo, hasYoutubeCredentials } from './lib/youtube-upload.js';
+import { uploadVideo, hasYoutubeCredentials, assertExpectedChannel } from './lib/youtube-upload.js';
 import { probeDurationSeconds } from './lib/ffmpeg-util.js';
 
 const DRY_RUN = process.argv.includes('--dry-run');
@@ -267,6 +267,24 @@ async function attemptLongScripts(research) {
 
 async function runFull() {
   await mkdir(runDir, { recursive: true });
+
+  // Fail fast if YouTube auth is missing or bound to the wrong channel,
+  // before spending 30-60 min of LLM/TTS/render on a batch that can't
+  // land on ModernMonkShot. Upload-time assertExpectedChannel still runs
+  // per video as a second line of defense.
+  if (config.upload?.enabled !== false && hasYoutubeCredentials()) {
+    try {
+      const ch = await assertExpectedChannel();
+      log(`YouTube upload target: "${ch.title}" (@${ch.handle || 'none'}) ${ch.channelId}`);
+    } catch (err) {
+      log(`YouTube channel check FAILED: ${err.message}`);
+      process.exitCode = 1;
+      return;
+    }
+  } else if (config.upload?.enabled !== false) {
+    log('WARNING: YouTube credentials missing -- finished videos will be parked in ready_to_upload/ only');
+  }
+
   let research = await researchTodaysTopic(today);
   log(`Topic: ${research.topic} (score ${research.score}/10 -- ${research.reason})`);
 
