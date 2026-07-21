@@ -107,7 +107,13 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
       const { audioPath, srtPath, durationSec, hadPause } = await synthesizeSegmentAudio(seg.text, runDir, `${baseName}-seg${i}`);
       audioPaths.push(audioPath);
       const capSrtPath = path.join(runDir, `${baseName}-seg${i}-cap.srt`);
-      const lines = await buildSegmentCaptions({ srtPath, text: seg.text, durationSec, outPath: capSrtPath });
+      const lines = await buildSegmentCaptions({
+        srtPath,
+        text: seg.text,
+        durationSec,
+        outPath: capSrtPath,
+        aspect // vertical Shorts → fewer words/line so captions stay small
+      });
       segmentCaptions.push({ lines, durationSec });
 
       const asset = await sourceMediaForSegment(seg, aspect, runDir, i, usedMediaUrls);
