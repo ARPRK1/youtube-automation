@@ -7,7 +7,7 @@ import { researchTodaysTopic } from './lib/research.js';
 import { writeLongScript, writeShortScripts } from './lib/script-writer.js';
 import { synthesizeSegmentAudio } from './lib/tts.js';
 import { buildSegmentCaptions } from './lib/captions.js';
-import { sourceMediaForSegment, writeMediaManifest } from './lib/media-sourcing.js';
+import { sourceMediaForSegment, expandSegmentVisualBeats, writeMediaManifest } from './lib/media-sourcing.js';
 import { renderVisualTimeline } from './lib/visuals.js';
 import { concatSegmentAudio, mergeSegmentCaptions, renderFinalVideo, prependIntro } from './lib/assemble.js';
 import { renderIntro } from './lib/intro.js';
@@ -117,12 +117,22 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
       segmentCaptions.push({ lines, durationSec });
 
       const asset = await sourceMediaForSegment(seg, aspect, runDir, i, usedMediaUrls);
-      mediaAssets.push({ ...asset, segmentIndex: i, durationSec, seed: `${baseName}-${i}`, hadPause });
+      // Expand one asset into many visual beats (real photo + pencil/ink/etc.)
+      // so a Short/long stretch never holds a single still for 20–40s.
+      const beats = await expandSegmentVisualBeats({
+        segment: seg,
+        primaryAsset: asset,
+        aspect,
+        durationSec,
+        seed: `${baseName}-${i}`,
+        segmentIndex: i
+      });
+      mediaAssets.push(...beats.map((b) => ({ ...b, hadPause })));
     }
     entry.steps.tts = 'ok';
     entry.steps.media = 'ok';
 
-    const totalNarrationSec = mediaAssets.reduce((s, a) => s + a.durationSec, 0);
+    const totalNarrationSec = segmentCaptions.reduce((s, c) => s + c.durationSec, 0);
     entry.durationSec = totalNarrationSec;
     if (kind === 'long' && totalNarrationSec < (config.video?.long_min_minutes ?? 5) * 60) {
       throw new Error(`Narration too short for long-form: ${totalNarrationSec.toFixed(1)}s (need ${(config.video?.long_min_minutes ?? 5) * 60}s+)`);
@@ -139,6 +149,7 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
     entry.steps.captions = 'ok';
 
     const bgPath = path.join(runDir, `${baseName}-bg.mp4`);
+    log(`[visuals] ${mediaAssets.length} beats across ${videoScript.segments.length} segments for "${videoScript.title}"`);
     await renderVisualTimeline({ items: mediaAssets, aspect, outPath: bgPath, seed: baseName });
     entry.steps.visuals = 'ok';
 
@@ -162,7 +173,14 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
     }
 
     const preMusicDuration = await probeDurationSeconds(finalPath);
-    const musicResult = await addBackgroundMusic({ videoPath: finalPath, outPath: finalPath.replace(/\.mp4$/, '-music.mp4'), durationSec: preMusicDuration, date: today });
+    const musicResult = await addBackgroundMusic({
+      videoPath: finalPath,
+      outPath: finalPath.replace(/\.mp4$/, '-music.mp4'),
+      durationSec: preMusicDuration,
+      date: today,
+      kind,
+      moodHint: research.topic || ''
+    });
     finalPath = musicResult.outPath;
     entry.steps.music = musicResult.credit ? 'ok' : 'skipped';
 

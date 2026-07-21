@@ -56,6 +56,20 @@ media:
   allowed_licenses: [pd, cc0, by, by-sa]
   ai_fallback_enabled: true
   verify_relevance: true
+  # Multi-beat visuals: cut every N seconds with real photos + AI pencil/
+  # ink/charcoal/cinematic variants so videos never freeze on one still.
+  visual_beat_seconds_short: 3.2
+  visual_beat_seconds_long: 4.8
+  max_visual_beats_short: 12
+  max_visual_beats_long: 16
+
+# Music: Shorts stay voice-only (better retention). Long-form gets a quiet
+# bed only when long enough; never wall-to-wall loud beds.
+music:
+  enabled: true
+  shorts: false
+  long_min_seconds: 100
+  volume_db: -18
 
 upload:
   enabled: true
