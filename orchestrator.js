@@ -12,7 +12,7 @@ import { renderVisualTimeline } from './lib/visuals.js';
 import { concatSegmentAudio, mergeSegmentCaptions, renderFinalVideo, prependIntro } from './lib/assemble.js';
 import { renderIntro } from './lib/intro.js';
 import { addBackgroundMusic } from './lib/music.js';
-import { renderThumbnail } from './lib/thumbnail.js';
+import { renderThumbnail, pickThumbnailKeyBuffer, accentForTitle } from './lib/thumbnail.js';
 import { runQualityGate } from './lib/quality-gate.js';
 import { uploadVideo, hasYoutubeCredentials, assertExpectedChannel } from './lib/youtube-upload.js';
 import { probeDurationSeconds } from './lib/ffmpeg-util.js';
@@ -169,7 +169,18 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
     };
 
     const thumbPath = path.join(runDir, `${baseName}-thumb.jpg`);
-    await renderThumbnail({ keyImageBuffer: mediaAssets[0]?.buffer, backgroundClipPath: bgPath, title: videoScript.title, outPath: thumbPath });
+    // Prefer a real (non-AI) still for the face of the video; fall back to
+    // first buffer / bg frame. Accent color is deterministic per title so
+    // re-runs stay consistent and shorts get a "SHORTS" badge for CTR.
+    await renderThumbnail({
+      keyImageBuffer: pickThumbnailKeyBuffer(mediaAssets) || mediaAssets[0]?.buffer,
+      backgroundClipPath: bgPath,
+      title: videoScript.title,
+      outPath: thumbPath,
+      accentColor: accentForTitle(videoScript.title),
+      kind,
+      badge: kind === 'short' ? 'SHORTS' : null
+    });
     entry.steps.thumbnail = 'ok';
 
     const description = buildDescription({ videoScript, research, attributionText });
