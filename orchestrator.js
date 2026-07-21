@@ -238,24 +238,56 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
   return entry;
 }
 
-async function runFull() {
-  await mkdir(runDir, { recursive: true });
-  const research = await researchTodaysTopic(today);
-  log(`Topic: ${research.topic} (score ${research.score}/10 -- ${research.reason})`);
-
-  const manifest = { date: dateStr, topic: research.topic, videos: [] };
+/** Attempts long_count_per_day scripts against one research/topic. Returns
+ * { longScripts, videos } -- videos includes an entry (success or error)
+ * for every attempt, same shape as the manifest expects. */
+async function attemptLongScripts(research) {
   const longScripts = [];
-
+  const videos = [];
   for (let i = 0; i < (LONG_COUNT_OVERRIDE ?? config.video?.long_count_per_day ?? 2); i++) {
     try {
       const script = await writeLongScript(research);
       longScripts.push(script);
       log(`Long script #${i + 1}: "${script.title}" (${script.structure}, ${script.segments.length} segments)`);
       const entry = await produceVideo({ kind: 'long', videoScript: script, research, aspect: 'landscape' });
-      manifest.videos.push(entry);
+      videos.push(entry);
     } catch (err) {
       log(`FAILED (long script #${i + 1}): ${err.message}`);
-      manifest.videos.push({ kind: 'long', error: err.message });
+      videos.push({ kind: 'long', error: err.message });
+    }
+  }
+  return { longScripts, videos };
+}
+
+async function runFull() {
+  await mkdir(runDir, { recursive: true });
+  let research = await researchTodaysTopic(today);
+  log(`Topic: ${research.topic} (score ${research.score}/10 -- ${research.reason})`);
+
+  const manifest = { date: dateStr, topic: research.topic, videos: [] };
+  let { longScripts, videos } = await attemptLongScripts(research);
+  manifest.videos.push(...videos);
+
+  // Zero long scripts succeeding on this topic (both attempts failing the
+  // same "narration keeps repeating"/"too short" way) is strong evidence
+  // the topic itself lacks real substance, not that generation got
+  // unlucky twice on the same fact pool -- retrying script generation
+  // again on identical thin material is unlikely to help, but a fresh
+  // topic with its own facts is a genuinely different shot. Confirmed
+  // live as a recurring cause of entire days producing zero long videos
+  // (and therefore zero Shorts, which depend on a successful long script).
+  if (longScripts.length === 0) {
+    log(`No long scripts succeeded on "${research.topic}" -- trying a backup topic instead of giving up for the day`);
+    try {
+      const backupResearch = await researchTodaysTopic(today, { excludeTitles: new Set([research.topic.toLowerCase()]) });
+      log(`Backup topic: ${backupResearch.topic} (score ${backupResearch.score}/10 -- ${backupResearch.reason})`);
+      research = backupResearch;
+      manifest.topic = research.topic;
+      const retry = await attemptLongScripts(research);
+      longScripts = retry.longScripts;
+      manifest.videos.push(...retry.videos);
+    } catch (err) {
+      log(`Backup topic attempt failed: ${err.message}`);
     }
   }
 
