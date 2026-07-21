@@ -340,7 +340,16 @@ async function runFull() {
   await writeFile(path.join(runDir, 'log.txt'), logText, 'utf-8');
 
   log(`Done. ${succeeded.length}/${manifest.videos.length} videos produced. ${uploaded.length} uploaded, ${readyForManual.length} parked for manual upload.`);
-  if (succeeded.length < manifest.videos.length) process.exitCode = 1;
+  // Only hard-fail the Actions job when the day produced nothing shippable.
+  // Partial days (e.g. 4/6 or 1/2 longs) used to exit 1 and paint the run
+  // red even when videos were already uploaded to YouTube -- confirmed live
+  // on runs 29829542423 (4 uploaded) and 29831073266 (1 uploaded). A red
+  // X on a day that shipped content is noise, not a signal.
+  if (succeeded.length === 0) {
+    process.exitCode = 1;
+  } else if (succeeded.length < manifest.videos.length) {
+    log(`Partial success (${succeeded.length}/${manifest.videos.length}) -- treating as non-fatal so shipped videos still count as a green run.`);
+  }
 }
 
 if (DRY_RUN) {
