@@ -214,13 +214,18 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
       entry.upload = { skipped: true, readyToUpload: true, reason: 'upload disabled or no credentials', path: videoDest };
     } else {
       try {
+        const privacyStatus = process.env.YOUTUBE_PRIVACY_STATUS || config.upload?.privacy_status || 'unlisted';
         const uploadRes = await uploadVideo({
           filePath: finalPath, title: videoScript.title, description, tags: videoScript.tags,
-          privacyStatus: config.upload?.privacy_status || 'unlisted', thumbnailPath: thumbPath,
+          privacyStatus, thumbnailPath: thumbPath,
           containsSyntheticMedia: anyAiGenerated
         });
         entry.upload = { ok: true, ...uploadRes };
         entry.steps.upload = 'ok';
+        // Always print the live URL -- "N uploaded" alone is useless for
+        // verifying which channel/account received the video, and log.txt
+        // is discarded with the runner so Studio is the only other check.
+        log(`UPLOADED (${kind}): "${videoScript.title}" -> ${uploadRes.url} (privacy=${privacyStatus})`);
       } catch (err) {
         // Never lose a finished video over an upload-time failure (quota,
         // auth expiry, transient API error) -- park it for manual/next-run retry.
@@ -229,6 +234,7 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
           containsSyntheticMedia: anyAiGenerated, reason: `Upload failed: ${err.message}`
         });
         entry.upload = { ok: false, readyToUpload: true, error: err.message, path: videoDest };
+        log(`UPLOAD FAILED (${kind} "${videoScript.title}"): ${err.message} -- parked at ${videoDest}`);
       }
     }
   } catch (err) {
