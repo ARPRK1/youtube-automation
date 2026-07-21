@@ -1,4 +1,4 @@
-name: FFmpeg xfade chain-length check (manual, throwaway)
+name: FFmpeg xfade varying-transitions check (manual, throwaway)
 on:
   workflow_dispatch: {}
 jobs:
@@ -7,27 +7,55 @@ jobs:
     steps:
       - name: Install ffmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - name: Chain increasing numbers of clips with a single transition type
+      - name: Chain 15 clips rotating through different transition types
         run: |
           for i in $(seq 0 15); do
             ffmpeg -y -f lavfi -i "color=c=red:s=320x240:d=2" -c:v libx264 -pix_fmt yuv420p clip$i.mp4
           done
-          for n in 5 8 10 11 12 15 16; do
-            echo "=== chaining $n clips (all fade) ==="
-            INPUTS=""
-            for i in $(seq 0 $((n-1))); do INPUTS="$INPUTS -i clip$i.mp4"; done
-            FILTER="[0:v]settb=1/25[v0n];"
-            CURRENT="[v0n]"
-            OFFSET=1.6
-            for i in $(seq 1 $((n-1))); do
-              NEXT="[v${i}n]"
-              FILTER="${FILTER}[${i}:v]settb=1/25${NEXT};"
-              if [ $i -eq $((n-1)) ]; then OUT="[outv]"; else OUT="[m${i}]"; fi
-              FILTER="${FILTER}${CURRENT}${NEXT}xfade=transition=fade:duration=0.4:offset=${OFFSET}${OUT};"
-              CURRENT="$OUT"
-              OFFSET=$(echo "$OFFSET + 1.6" | bc)
-            done
-            FILTER="${FILTER%;}"
-            ffmpeg -y $INPUTS -filter_complex "$FILTER" -map "[outv]" -pix_fmt yuv420p -c:v libx264 -preset veryfast -crf 20 -t $((n*2)) "out-$n.mp4" \
-              > "log-$n.txt" 2>&1 && echo "OK: $n clips" || (echo "FAILED: $n clips"; tail -5 "log-$n.txt")
+          TYPES=(fade wipeleft wiperight wipeup wipedown slideleft slideright slideup slidedown)
+          n=15
+          INPUTS=""
+          for i in $(seq 0 $((n-1))); do INPUTS="$INPUTS -i clip$i.mp4"; done
+          FILTER="[0:v]settb=1/25[v0n];"
+          CURRENT="[v0n]"
+          OFFSET=1.6
+          for i in $(seq 1 $((n-1))); do
+            NEXT="[v${i}n]"
+            FILTER="${FILTER}[${i}:v]settb=1/25${NEXT};"
+            if [ $i -eq $((n-1)) ]; then OUT="[outv]"; else OUT="[m${i}]"; fi
+            T=${TYPES[$((i % 9))]}
+            FILTER="${FILTER}${CURRENT}${NEXT}xfade=transition=${T}:duration=0.4:offset=${OFFSET}${OUT};"
+            CURRENT="$OUT"
+            OFFSET=$(echo "$OFFSET + 1.6" | bc)
           done
+          FILTER="${FILTER%;}"
+          echo "FILTER: $FILTER"
+          ffmpeg -y $INPUTS -filter_complex "$FILTER" -map "[outv]" -pix_fmt yuv420p -c:v libx264 -preset veryfast -crf 20 -t $((n*2)) "out-varied.mp4" \
+            && echo "OK: varied transitions" || echo "FAILED: varied transitions"
+
+      - name: Chain 15 clips mixing cuts (concat) and fades
+        run: |
+          TYPES=(cut fade cut fade cut fade cut fade cut fade cut fade cut fade)
+          n=15
+          INPUTS=""
+          for i in $(seq 0 $((n-1))); do INPUTS="$INPUTS -i clip$i.mp4"; done
+          FILTER="[0:v]settb=1/25[v0n];"
+          CURRENT="[v0n]"
+          OFFSET=1.6
+          for i in $(seq 1 $((n-1))); do
+            NEXT="[v${i}n]"
+            FILTER="${FILTER}[${i}:v]settb=1/25${NEXT};"
+            if [ $i -eq $((n-1)) ]; then OUT="[outv]"; else OUT="[m${i}]"; fi
+            T=${TYPES[$((i-1))]}
+            if [ "$T" = "cut" ]; then
+              FILTER="${FILTER}${CURRENT}${NEXT}concat=n=2:v=1:a=0${OUT};"
+            else
+              FILTER="${FILTER}${CURRENT}${NEXT}xfade=transition=fade:duration=0.4:offset=${OFFSET}${OUT};"
+            fi
+            CURRENT="$OUT"
+            OFFSET=$(echo "$OFFSET + 1.6" | bc)
+          done
+          FILTER="${FILTER%;}"
+          echo "FILTER: $FILTER"
+          ffmpeg -y $INPUTS -filter_complex "$FILTER" -map "[outv]" -pix_fmt yuv420p -c:v libx264 -preset veryfast -crf 20 -t $((n*2)) "out-mixed.mp4" \
+            && echo "OK: mixed cut+fade" || echo "FAILED: mixed cut+fade"
