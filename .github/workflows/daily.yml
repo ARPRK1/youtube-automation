@@ -66,7 +66,14 @@ jobs:
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
 
       - name: Upload run output as build artifact
+        # continue-on-error: a full successful generation day must not be
+        # painted red solely because the free-tier artifact storage quota
+        # is exhausted (confirmed live in Daily #13 and later runs:
+        # "Failed to CreateArtifact: Artifact storage quota has been hit").
+        # Videos already land in ready_to_upload/ on the runner; the
+        # artifact is a convenience, not the source of truth.
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: videos-${{ github.run_id }}
@@ -81,8 +88,9 @@ jobs:
           # failing artifact uploads entirely (confirmed live: "Artifact
           # storage quota has been hit", with usage only recalculated
           # every 6-12 hours after cleanup -- not something a same-run fix
-          # can route around). retention-days cut from 14 to 5 for the
+          # can route around). retention-days cut from 14 to 3 for the
           # same reason: less accumulation, less chance of hitting this
           # again.
           path: ready_to_upload/**
-          retention-days: 5
+          retention-days: 3
+          if-no-files-found: warn
