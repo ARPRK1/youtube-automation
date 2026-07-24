@@ -45,13 +45,15 @@ jobs:
           pip install "git+https://github.com/resemble-ai/Perth.git@master"
           pip install chatterbox-tts --no-deps
 
-      - name: Synthesize a test phrase directly in the cloned voice
-        # A single stdin line is enough here: the server's `for line in
-        # sys.stdin` loop processes it and then exits cleanly on EOF once
-        # the pipe closes, same as the real (long-lived) usage but for
-        # exactly one request.
+      - name: Synthesize a realistic-length test paragraph directly in the cloned voice
+        # ~180 words -- close to a real long-form segment's length -- so the
+        # wall-clock time here (vs. this file's own start/end timestamps)
+        # gives a real CPU-inference words/sec rate to size daily.yml's
+        # timeout against, instead of guessing from the old 28-word phrase.
         run: |
-          echo '{"text": "This is a quick test of the voice cloning pipeline before it ever touches a real video. If this sounds like me, the cloning is working.", "output": "/tmp/test-cloned.wav", "reference": "voice-sample/reference.wav"}' | python scripts/chatterbox_server.py | tee /tmp/server.log
+          date -u +"START %Y-%m-%dT%H:%M:%SZ"
+          echo '{"text": "Here is a longer test paragraph, closer to what a real video segment sounds like, so we can measure how long the cloned voice actually takes to render on this machine. Quantum entanglement is one of the strangest ideas in physics. When two particles become entangled, measuring one instantly tells you something about the other, no matter how far apart they are. Einstein called this spooky action at a distance because it seemed to break the speed limit of the universe. But nothing is actually being sent between the particles faster than light. The correlation was built in the moment they became entangled, like two coins that always land on opposite sides no matter how far apart you flip them. If this sounds like my own voice and the timing works out, the cloning pipeline is ready for real production videos.", "output": "/tmp/test-cloned.wav", "reference": "voice-sample/reference.wav"}' | python scripts/chatterbox_server.py | tee /tmp/server.log
+          date -u +"END %Y-%m-%dT%H:%M:%SZ"
 
       - name: Upload cloned test clip
         if: always()
