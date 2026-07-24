@@ -45,23 +45,34 @@ jobs:
           pip install "git+https://github.com/resemble-ai/Perth.git@master"
           pip install chatterbox-tts --no-deps
 
-      - name: Synthesize a realistic-length test paragraph directly in the cloned voice
-        # ~180 words -- close to a real long-form segment's length -- so the
-        # wall-clock time here (vs. this file's own start/end timestamps)
-        # gives a real CPU-inference words/sec rate to size daily.yml's
-        # timeout against, instead of guessing from the old 28-word phrase.
+      - name: Synthesize two segments in one warm server session
+        # Two requests through the SAME persistent server process (matching
+        # real daily-job usage, which loads the model once then serves every
+        # segment) so we can isolate one-time model load/download (request 1)
+        # from the actual marginal per-segment inference cost (request 2) --
+        # confirmed live on 2026-07-24 that a single-request test gives a
+        # number dominated by cold load, not a usable per-segment rate for
+        # sizing daily.yml's timeout. GitHub Actions timestamps every log
+        # line already, so the gap between the two `{"ok": true, ...}`
+        # response lines (piped through `ts` isn't needed -- the raw log
+        # view shows per-line UTC timestamps) IS the per-segment cost.
         run: |
-          date -u +"START %Y-%m-%dT%H:%M:%SZ"
-          echo '{"text": "Here is a longer test paragraph, closer to what a real video segment sounds like, so we can measure how long the cloned voice actually takes to render on this machine. Quantum entanglement is one of the strangest ideas in physics. When two particles become entangled, measuring one instantly tells you something about the other, no matter how far apart they are. Einstein called this spooky action at a distance because it seemed to break the speed limit of the universe. But nothing is actually being sent between the particles faster than light. The correlation was built in the moment they became entangled, like two coins that always land on opposite sides no matter how far apart you flip them. If this sounds like my own voice and the timing works out, the cloning pipeline is ready for real production videos.", "output": "/tmp/test-cloned.wav", "reference": "voice-sample/reference.wav"}' | python scripts/chatterbox_server.py | tee /tmp/server.log
-          date -u +"END %Y-%m-%dT%H:%M:%SZ"
+          date -u +"BATCH_START %Y-%m-%dT%H:%M:%SZ"
+          printf '%s\n%s\n' \
+            '{"text": "Here is a longer test paragraph, closer to what a real video segment sounds like, so we can measure how long the cloned voice actually takes to render on this machine. Quantum entanglement is one of the strangest ideas in physics. When two particles become entangled, measuring one instantly tells you something about the other, no matter how far apart they are. Einstein called this spooky action at a distance because it seemed to break the speed limit of the universe. But nothing is actually being sent between the particles faster than light.", "output": "/tmp/test-cloned-1.wav", "reference": "voice-sample/reference.wav"}' \
+            '{"text": "The correlation between entangled particles was built in the moment they became entangled, like two coins that always land on opposite sides no matter how far apart you flip them. If this sounds like my own voice and the timing works out, the cloning pipeline is ready for real production videos with many segments per day.", "output": "/tmp/test-cloned-2.wav", "reference": "voice-sample/reference.wav"}' \
+            | stdbuf -oL python scripts/chatterbox_server.py | while IFS= read -r line; do date -u +"%Y-%m-%dT%H:%M:%SZ RESPONSE: $line"; done | tee /tmp/server.log
+          date -u +"BATCH_END %Y-%m-%dT%H:%M:%SZ"
 
-      - name: Upload cloned test clip
+      - name: Upload cloned test clips
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: chatterbox-test-output
           path: |
-            /tmp/test-cloned.wav
+            /tmp/test-cloned-1.wav
+            /tmp/test-cloned-2.wav
             /tmp/server.log
           if-no-files-found: warn
           retention-days: 7
