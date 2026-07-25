@@ -1,6 +1,8 @@
 # ModernMonk 90-day monetization config.
 # Target: YouTube Partner Program (1k subs + 4k watch hours OR 10M Shorts views / 90d).
-# Strategy: PUBLIC Shorts-first, niche coherence, NOT made-for-kids, food+money+history.
+# Strategy: PUBLIC Shorts-first, niche coherence, NOT made-for-kids.
+# Pillars (2026-07-24): AI/ML explained, history turning points, daily-life
+# hacks, physics/logic paradoxes -- universal, diagram-native content.
 
 video:
   # Shorts path is the realistic automation route to early views/subs.
@@ -14,25 +16,33 @@ video:
   shorts_max_seconds: 55
 
 voice:
+  # Male voice for the global-audience pivot (2026-07-24). Chatterbox
+  # (the user's own cloned voice, voice-sample/reference.wav) was measured
+  # live first: ~3.7-4.4s of CPU compute per word on GitHub's free-tier
+  # runner -- a full day's narration (~2000 words) would need ~130-150 min
+  # of TTS alone, and this repo is private so Actions minutes are metered,
+  # not free. Staying on edge-tts (free, ~instant, zero added run time)
+  # until a cheaper way to run Chatterbox exists (e.g. a self-hosted
+  # runner with a GPU). en-US-AndrewNeural is already lib/tts.js's built-in
+  # default male voice.
   provider: edge-tts
-  edge_tts_voice: en-IN-NeerjaNeural
-  # en-IN voices convert better for India-topic content (audience is IN).
-  # Fallback if missing on runner: orchestrator/tts should still work with en-US.
+  edge_tts_voice: en-US-AndrewNeural
   kokoro_voice: af_heart
   reference_sample: voice-sample/reference.wav
   chatterbox_exaggeration: 0.5
 
 topics:
-  # Focused mode: bias research toward niches that already got 500–1k+ views
-  # on this channel (food origin, money, history twist, places). Still uses
-  # live trends, but scores proven-niche candidates higher.
+  # Focused mode: bias research toward the channel's new universal, diagram-
+  # friendly pillars (AI/ML, history turning points, daily hacks, physics
+  # paradoxes) instead of the old India-only food/money/history/places set.
+  # Still uses live trends, but scores proven-niche candidates higher.
   mode: growth-focused
   avoid_repeat_days: 21
   primary_niches:
-    - indian-food-story
-    - indian-money-simple
-    - india-history-twist
-    - india-place-secret
+    - ai-ml-explained
+    - history-turning-point
+    - daily-life-hack
+    - physics-paradox
   sources:
     google_trends_india: true
     google_news: true
@@ -56,8 +66,16 @@ media:
   allowed_licenses: [pd, cc0, by, by-sa]
   ai_fallback_enabled: true
   verify_relevance: true
-  # Multi-beat visuals: cut every N seconds with real photos + AI pencil/
-  # ink/charcoal/cinematic variants so videos never freeze on one still.
+  # ai-only: skip the real-media search + vision-verify chain entirely and
+  # go straight to AI-generated whiteboard/diagram visuals (see
+  # lib/media-sourcing.js#sourceMediaForSegment). Fits this channel's new
+  # AI/ML, history, hacks, and physics-paradox pillars -- diagram/sketch
+  # content has nothing real to search for or verify a photo against -- and
+  # fixes the 90-minute-timeout bottleneck confirmed live on 2026-07-22/23
+  # (up to 16 vision-LLM calls per entity in the old real-media chain).
+  mode: ai-only
+  # Multi-beat visuals: cut every N seconds with AI whiteboard/diagram/ink/
+  # cinematic variants so videos never freeze on one still.
   visual_beat_seconds_short: 3.2
   visual_beat_seconds_long: 4.8
   max_visual_beats_short: 12

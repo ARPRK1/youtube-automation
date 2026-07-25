@@ -2,9 +2,9 @@ name: Daily video generation
 
 on:
   schedule:
-    # Peak India mobile evening window ( empirically better for Shorts
-    # discovery for IN audience). 13:30 UTC = 7:00pm IST.
-    # Off the hour to dodge the on-the-hour cron pile-up.
+    # 13:30 UTC (empirically decent evening window across US/EU/IN
+    # timezones for a global audience). Off the hour to dodge the
+    # on-the-hour cron pile-up.
     - cron: '30 13 * * *'
   workflow_dispatch:
     inputs:
@@ -20,7 +20,18 @@ on:
 jobs:
   generate:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    # Modest bump from 90: the new AI-only visual mode (2026-07-24) removes
+    # the old real-media-search + vision-verify bottleneck (72 of 90 min on
+    # one video, confirmed live 2026-07-22/23), which should net *reduce*
+    # runtime, but this is that new code path's first production run, so a
+    # small safety margin instead of dropping the ceiling all the way back
+    # down. (Chatterbox cloned-voice TTS was evaluated the same day and
+    # deferred -- ~3.7-4.4s of CPU compute per word on this runner would
+    # mean ~130-150 min of TTS alone for a full day's narration, on a
+    # private repo where Actions minutes are metered. Staying on edge-tts;
+    # see config.yaml's voice: block for the full writeup and
+    # .github/workflows/chatterbox-test.yml for a from-scratch retest.)
+    timeout-minutes: 100
 
     steps:
       - uses: actions/checkout@v4

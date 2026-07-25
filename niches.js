@@ -1,45 +1,27 @@
 // Day-of-week -> niche map. getDay(): 0=Sun ... 6=Sat.
-// Per user direction: content is India-focused by default; a niche is only
-// kept global/universal where the subject itself is inherently global (AI).
+// Niche pivot (2026-07-24): replaced the old India-only food/money/history/
+// places rotation with a universal, sketch/diagram-friendly identity - AI &
+// ML, history turning points, daily-life hacks, physics/logic paradoxes -
+// so every day stays visually generatable without location-specific b-roll
+// (see lib/ai-image.js's whiteboard/diagram styles) and the audience isn't
+// region-locked. Distribution roughly follows lib/growth.js's pillar
+// weights (AI/ML and history/hacks get 2 days each, physics gets 1).
 //
 // `searchQueries` are rotated daily and fed to Google News to find today's
 // real, current topic for that niche (see lib/trends.js) — the static
 // `fallbackTopics` below are only used if that live lookup fails.
 export const NICHE_BY_WEEKDAY = {
   1: {
-    name: 'Indian Stock Market & Finance',
-    audience: 'Indian retail investors and young professionals building wealth',
-    region: 'IN',
-    accentColor: '#2a9d8f',
-    searchQueries: [
-      'Indian stock market today',
-      'Nifty Sensex news',
-      'India mutual funds personal finance',
-      'RBI interest rate India',
-      'Indian IPO news'
-    ],
-    fallbackTopics: [
-      'How compound interest builds wealth in Indian mutual funds',
-      'Reading a candlestick chart for Nifty/Sensex beginners',
-      'What a P/E ratio tells you about an Indian stock',
-      'Index funds vs individual stocks for Indian investors',
-      'How RBI rate changes move Indian markets',
-      'Common mistakes Indian beginner investors make',
-      'How to read an Indian company earnings report',
-      'SIP and dollar-cost averaging explained for India'
-    ]
-  },
-  2: {
-    name: 'AI & Education',
-    audience: 'Students, lifelong learners, and tech-curious professionals worldwide',
+    name: 'AI & ML Explained',
+    audience: 'Students, builders, and tech-curious professionals worldwide',
     region: 'global',
     accentColor: '#4361ee',
     searchQueries: [
       'AI news today',
       'new AI tool launch',
       'artificial intelligence breakthrough',
-      'AI in India jobs education',
-      'machine learning explained'
+      'machine learning explained',
+      'how does AI work'
     ],
     fallbackTopics: [
       'How large language models actually work',
@@ -47,120 +29,145 @@ export const NICHE_BY_WEEKDAY = {
       'The history of a major AI breakthrough',
       'How neural networks learn from data',
       'AI vs automation: what is the real difference',
-      'How AI is changing jobs and education in India',
+      'How AI is changing jobs and education worldwide',
       'The math behind machine learning, explained simply',
       'What jobs AI can and cannot replace'
     ]
   },
-  3: {
-    name: 'Indian Mystery & History',
-    audience: 'Indian history buffs and true-mystery/documentary fans',
-    region: 'IN',
+  2: {
+    name: 'History Turning Points',
+    audience: 'Curious learners who love a good "one decision changed everything" story',
+    region: 'global',
     accentColor: '#9d4edd',
     searchQueries: [
-      'unsolved mystery India',
-      'Indian history discovery',
-      'ancient India archaeology news',
-      'India true crime cold case',
-      'lost Indian kingdom history'
+      'history discovery news',
+      'ancient history archaeology news',
+      'lost civilization history',
+      'history this day',
+      'historical turning point'
     ],
     fallbackTopics: [
-      'An unsolved Indian mystery and its leading theories',
-      'A lost Indian kingdom or dynasty and why it vanished',
-      'A historical event in India that changed the subcontinent',
-      'A famous Indian cold case and what the evidence says',
-      'A rediscovered ancient Indian artifact or site',
-      'A conspiracy theory from Indian history examined against facts',
-      'A battle in Indian history that turned on one decision',
-      'An ancient Indian technology we still do not fully understand'
+      'A lost civilization and why it vanished',
+      'A historical event that changed the world in one decision',
+      'A rediscovered ancient artifact or site and what it reveals',
+      'A conspiracy theory from history examined against the facts',
+      'A battle in history that turned on one small decision',
+      'An ancient technology we still do not fully understand',
+      'The invention that changed history by accident',
+      'A historical figure whose one choice changed everything'
+    ]
+  },
+  3: {
+    name: 'AI & ML Explained',
+    audience: 'Students, builders, and tech-curious professionals worldwide',
+    region: 'global',
+    accentColor: '#4361ee',
+    searchQueries: [
+      'AI research news',
+      'AI breakthrough explained',
+      'machine learning concept explained',
+      'how neural networks work',
+      'AI tool comparison'
+    ],
+    fallbackTopics: [
+      'How image-generating AI actually works',
+      'Why AI models hallucinate and what causes it',
+      'How AI learns to recognize faces or objects',
+      'The difference between AI, machine learning, and deep learning',
+      'How chatbots actually understand (or don\'t understand) you',
+      'The breakthrough that made modern AI possible',
+      'How self-driving cars "see" the road',
+      'What a "parameter" in an AI model actually means'
     ]
   },
   4: {
-    name: 'Indian Food & Culture',
-    audience: 'Indian home cooks, travelers, and culture enthusiasts',
-    region: 'IN',
+    name: 'Daily Life Hacks',
+    audience: 'Anyone who wants small, high-leverage tricks for everyday life',
+    region: 'global',
     accentColor: '#f77f00',
     searchQueries: [
-      'Indian food trend news',
-      'Indian festival celebration',
-      'regional Indian cuisine',
-      'street food India',
-      'Indian culture tradition story'
+      'life hack trending',
+      'productivity trick',
+      'science-backed habit',
+      'daily routine hack',
+      'psychology trick everyday life'
     ],
     fallbackTopics: [
-      'The history and origin story of a famous Indian dish',
-      'How a regional Indian cuisine developed its flavors',
-      'A street food tradition from an Indian city',
-      'The science of why an Indian cooking technique works',
-      'An Indian festival and the food traditions behind it',
-      'How a spice from India changed world trade and history',
-      'Comfort food traditions across different Indian states',
-      'The story behind a beloved Indian national dish'
+      'A science-backed trick that makes a daily task easier',
+      'Why a common habit is secretly working against you',
+      'A memory trick that actually works, explained',
+      'The psychology behind why a simple trick works',
+      'A time-saving trick most people never learn',
+      'A cheap fix for a problem everyone has',
+      'How to break a bad habit using one small change',
+      'A counterintuitive trick that saves real time or money'
     ]
   },
   5: {
-    name: 'Indian Tourism & Places',
-    audience: 'Travelers and armchair explorers interested in India',
-    region: 'IN',
+    name: 'Physics & Logic Paradoxes',
+    audience: 'Curious minds who love "wait, what?" ideas',
+    region: 'global',
     accentColor: '#06a77d',
     searchQueries: [
-      'India travel destination',
-      'hidden gem place India',
-      'Indian tourism news',
-      'best places to visit India',
-      'India heritage site'
+      'physics paradox explained',
+      'logic puzzle mind bending',
+      'quantum physics explained simply',
+      'thought experiment physics',
+      'physics discovery news'
     ],
     fallbackTopics: [
-      'An underrated Indian destination worth visiting',
-      'The story behind a famous Indian landmark',
-      'A hidden natural wonder in India few people know about',
-      'What makes a specific Indian city unique to visit',
-      'A budget travel guide to a popular Indian region',
-      'An Indian island or region shaped by its geography',
-      'The history behind a famous Indian travel route',
-      'An Indian destination best visited in a specific season'
+      'A physics paradox that sounds impossible but is real',
+      'A logic puzzle that breaks most people\'s intuition',
+      'A thought experiment that reveals something deep about reality',
+      'Why a basic assumption about time or space is wrong',
+      'A quantum physics idea explained without the jargon',
+      'An "impossible" result that is actually true, and why',
+      'A famous unsolved paradox and the leading explanations',
+      'How a simple question in physics led to a huge discovery'
     ]
   },
   6: {
-    name: 'Bollywood, Cricket & Entertainment',
-    audience: 'Indian movie fans, cricket fans, and pop-culture followers',
-    region: 'IN',
-    accentColor: '#e63946',
+    name: 'History Turning Points',
+    audience: 'Curious learners who love a good "one decision changed everything" story',
+    region: 'global',
+    accentColor: '#9d4edd',
     searchQueries: [
-      'Bollywood news today',
-      'India cricket news',
-      'Indian entertainment industry',
-      'Bollywood movie box office',
-      'Indian sports news'
+      'history mystery unsolved',
+      'historical discovery news',
+      'history one decision',
+      'forgotten history story',
+      'history that changed the world'
     ],
     fallbackTopics: [
-      'The making of an iconic Bollywood film scene',
-      'A cricket rivalry and the story behind it',
-      'How a Bollywood franchise built its fan base over decades',
-      'An underdog story from Indian sports history',
-      'The evolution of Bollywood cinema over time',
-      'A behind-the-scenes story from a famous Indian production',
-      'A record-breaking moment in Indian cricket and why it mattered',
-      'How a Bollywood soundtrack shaped a film\'s legacy'
+      'An unsolved historical mystery and its leading theories',
+      'A forgotten historical figure who changed everything',
+      'A historical "what if" and how differently things could have gone',
+      'The single decision that decided a famous historical outcome',
+      'A historical technology or idea that was ahead of its time',
+      'A moment in history that was almost completely different',
+      'How one accident changed the course of history',
+      'A historical rivalry and the decision that ended it'
     ]
   },
   0: {
-    name: 'India Week Updates & Trending',
-    audience: 'Indian audience wanting a quick, sharp recap of the week',
-    region: 'IN-trending',
-    accentColor: '#ffb703',
+    name: 'Daily Life Hacks',
+    audience: 'Anyone who wants small, high-leverage tricks for everyday life',
+    region: 'global',
+    accentColor: '#f77f00',
     searchQueries: [
-      'India news this week',
-      'India trending today'
+      'weekly life hack roundup',
+      'productivity trick trending',
+      'best life hacks this week',
+      'science-backed hack'
     ],
     fallbackTopics: [
-      'This week\'s biggest India headlines, explained simply',
-      'What trended in India this week and why it mattered',
-      'A weekly recap of major Indian technology news',
-      'A weekly recap of major Indian business and market news',
-      'What to know before the week ahead in India',
-      'This week\'s most talked-about Indian story, explained',
-      'A roundup of interesting smaller stories from India this week'
+      'This week\'s most useful life hack, explained simply',
+      'A weekly roundup of small tricks that add up',
+      'What to know before the week ahead: one useful habit',
+      'A science-backed trick worth starting this week',
+      'A roundup of interesting small hacks people are trying',
+      'One habit change that compounds over a week',
+      'A quick recap of hacks worth remembering'
     ]
   }
 };
