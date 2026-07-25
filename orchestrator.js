@@ -24,6 +24,12 @@ const DRY_RUN = process.argv.includes('--dry-run');
 const LONG_ONLY = process.argv.includes('--long-only');
 const longCountArg = process.argv.find((a) => a.startsWith('--long-count='));
 const LONG_COUNT_OVERRIDE = longCountArg ? parseInt(longCountArg.split('=')[1], 10) : null;
+// --niche=<pillar-id> pins today's pillar (see lib/growth.js's
+// PROVEN_GROWTH_NICHES ids) instead of the date-keyed rotation -- for a
+// same-day retry that needs a different pillar than one already used
+// earlier today.
+const nicheArg = process.argv.find((a) => a.startsWith('--niche='));
+const NICHE_OVERRIDE = nicheArg ? nicheArg.split('=')[1] : null;
 const config = loadConfig();
 const today = new Date();
 const dateStr = today.toISOString().slice(0, 10);
@@ -325,7 +331,7 @@ async function runFull() {
     log('WARNING: YouTube credentials missing -- finished videos will be parked in ready_to_upload/ only');
   }
 
-  let research = await researchTodaysTopic(today);
+  let research = await researchTodaysTopic(today, { forceNicheId: NICHE_OVERRIDE });
   log(`Topic: ${research.topic} (score ${research.score}/10 -- ${research.reason})`);
 
   const manifest = { date: dateStr, topic: research.topic, videos: [] };
@@ -343,7 +349,7 @@ async function runFull() {
   if (longScripts.length === 0) {
     log(`No long scripts succeeded on "${research.topic}" -- trying a backup topic instead of giving up for the day`);
     try {
-      const backupResearch = await researchTodaysTopic(today, { excludeTitles: new Set([research.topic.toLowerCase()]) });
+      const backupResearch = await researchTodaysTopic(today, { excludeTitles: new Set([research.topic.toLowerCase()]), forceNicheId: NICHE_OVERRIDE });
       log(`Backup topic: ${backupResearch.topic} (score ${backupResearch.score}/10 -- ${backupResearch.reason})`);
       research = backupResearch;
       manifest.topic = research.topic;
