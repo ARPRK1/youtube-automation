@@ -50,7 +50,15 @@ topics:
     reddit: false
 
 script:
-  min_long_words: 1000
+  # Raised 1000 -> 1300 (2026-07-25): words_per_minute below is a PLANNING
+  # estimate, not the real synthesized rate -- measured real speech on the
+  # current voice is ~170 wpm, so 1000 words could (and 3 of 4 pillar runs
+  # this same day did) produce under 360s of real audio, failing
+  # orchestrator.js's post-TTS duration gate only after the full ~50-60 min
+  # script+TTS+visual pipeline already ran. 1300 words clears 360s with
+  # real margin even at a slower-than-measured rate. See lib/script-writer.js
+  # softMin for the matching floor on the degraded (de-repeated) path.
+  min_long_words: 1300
   target_long_words: 1600
   # Shorts spoken length ~ 80–120 words at 200 wpm ≈ 25–35s
   min_short_words: 70

@@ -292,17 +292,27 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
 
 /** Attempts long_count_per_day scripts against one research/topic. Returns
  * { longScripts, videos } -- videos includes an entry (success or error)
- * for every attempt, same shape as the manifest expects. */
+ * for every attempt, same shape as the manifest expects. `longScripts` only
+ * includes scripts that actually became a finished video (uploaded OR
+ * parked -- either way a real file exists), NOT every script that merely
+ * got written: pushing here unconditionally right after writeLongScript()
+ * meant a script that was written fine but then failed during TTS/render/
+ * duration-gate still counted as "succeeded" everywhere longScripts is
+ * used downstream -- both the backup-topic-retry trigger (which then never
+ * fired) and the shorts-generation gate (which could try to derive Shorts
+ * from a long video that was never actually produced). Confirmed live
+ * 2026-07-25: 3 of 4 pillar runs hit exactly the first case, each silently
+ * producing zero videos with no retry after a ~50-60 min pipeline run. */
 async function attemptLongScripts(research) {
   const longScripts = [];
   const videos = [];
   for (let i = 0; i < (LONG_COUNT_OVERRIDE ?? config.video?.long_count_per_day ?? 2); i++) {
     try {
       const script = await writeLongScript(research);
-      longScripts.push(script);
       log(`Long script #${i + 1}: "${script.title}" (${script.structure}, ${script.segments.length} segments)`);
       const entry = await produceVideo({ kind: 'long', videoScript: script, research, aspect: 'landscape' });
       videos.push(entry);
+      if (!entry.error) longScripts.push(script);
     } catch (err) {
       log(`FAILED (long script #${i + 1}): ${err.message}`);
       videos.push({ kind: 'long', error: err.message });
@@ -346,8 +356,12 @@ async function runFull() {
   // topic with its own facts is a genuinely different shot. Confirmed
   // live as a recurring cause of entire days producing zero long videos
   // (and therefore zero Shorts, which depend on a successful long script).
+  // (longScripts now only counts scripts that became a real finished
+  // video -- see attemptLongScripts' comment -- so this check is accurate
+  // for both a script that never got written and one that did but never
+  // finished.)
   if (longScripts.length === 0) {
-    log(`No long scripts succeeded on "${research.topic}" -- trying a backup topic instead of giving up for the day`);
+    log(`No long videos succeeded on "${research.topic}" -- trying a backup topic instead of giving up for the day`);
     try {
       const backupResearch = await researchTodaysTopic(today, { excludeTitles: new Set([research.topic.toLowerCase()]), forceNicheId: NICHE_OVERRIDE });
       log(`Backup topic: ${backupResearch.topic} (score ${backupResearch.score}/10 -- ${backupResearch.reason})`);
