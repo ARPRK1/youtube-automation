@@ -160,6 +160,16 @@ jobs:
           STAGE=$(mktemp -d)
           cp -r "$SRC_DIR" "$STAGE/"
 
+          # Discard any tracked-file changes from earlier steps (confirmed
+          # live 2026-07-25: `npm install` leaves package-lock.json locally
+          # modified, which made `git checkout -B ... origin/parked-videos`
+          # abort with "commit your changes or stash them" -- costing a real
+          # produced-and-parked video its only recovery path, the exact
+          # failure this whole step exists to prevent). Safe to discard
+          # unconditionally here: everything this job needs from the
+          # working tree is already captured in $STAGE above.
+          git reset --hard HEAD >/dev/null
+
           if git ls-remote --exit-code --heads origin parked-videos >/dev/null 2>&1; then
             git fetch origin parked-videos
             git checkout -B parked-videos origin/parked-videos

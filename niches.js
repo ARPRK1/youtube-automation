@@ -13,6 +13,7 @@
 export const NICHE_BY_WEEKDAY = {
   1: {
     name: 'AI & ML Explained',
+    pillarId: 'ai-ml-explained',
     audience: 'Students, builders, and tech-curious professionals worldwide',
     region: 'global',
     accentColor: '#4361ee',
@@ -36,6 +37,7 @@ export const NICHE_BY_WEEKDAY = {
   },
   2: {
     name: 'History Turning Points',
+    pillarId: 'history-turning-point',
     audience: 'Curious learners who love a good "one decision changed everything" story',
     region: 'global',
     accentColor: '#9d4edd',
@@ -59,6 +61,7 @@ export const NICHE_BY_WEEKDAY = {
   },
   3: {
     name: 'AI & ML Explained',
+    pillarId: 'ai-ml-explained',
     audience: 'Students, builders, and tech-curious professionals worldwide',
     region: 'global',
     accentColor: '#4361ee',
@@ -82,6 +85,7 @@ export const NICHE_BY_WEEKDAY = {
   },
   4: {
     name: 'Daily Life Hacks',
+    pillarId: 'daily-life-hack',
     audience: 'Anyone who wants small, high-leverage tricks for everyday life',
     region: 'global',
     accentColor: '#f77f00',
@@ -105,6 +109,7 @@ export const NICHE_BY_WEEKDAY = {
   },
   5: {
     name: 'Physics & Logic Paradoxes',
+    pillarId: 'physics-paradox',
     audience: 'Curious minds who love "wait, what?" ideas',
     region: 'global',
     accentColor: '#06a77d',
@@ -128,6 +133,7 @@ export const NICHE_BY_WEEKDAY = {
   },
   6: {
     name: 'History Turning Points',
+    pillarId: 'history-turning-point',
     audience: 'Curious learners who love a good "one decision changed everything" story',
     region: 'global',
     accentColor: '#9d4edd',
@@ -151,6 +157,7 @@ export const NICHE_BY_WEEKDAY = {
   },
   0: {
     name: 'Daily Life Hacks',
+    pillarId: 'daily-life-hack',
     audience: 'Anyone who wants small, high-leverage tricks for everyday life',
     region: 'global',
     accentColor: '#f77f00',
