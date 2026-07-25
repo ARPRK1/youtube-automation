@@ -20,18 +20,22 @@ on:
 jobs:
   generate:
     runs-on: ubuntu-latest
-    # Modest bump from 90: the new AI-only visual mode (2026-07-24) removes
-    # the old real-media-search + vision-verify bottleneck (72 of 90 min on
-    # one video, confirmed live 2026-07-22/23), which should net *reduce*
-    # runtime, but this is that new code path's first production run, so a
-    # small safety margin instead of dropping the ceiling all the way back
-    # down. (Chatterbox cloned-voice TTS was evaluated the same day and
+    # Raised again after the first live AI-only-mode run (2026-07-25,
+    # run 30140563750): it succeeded but finished in 98.65 of the 100 min
+    # ceiling -- 1.35 min of margin, effectively the same razor-thin-timeout
+    # risk this mode was built to fix. The AI-only path did remove the old
+    # vision-verify LLM chain (confirmed: zero vision-check calls in that
+    # run's log), but per-beat AI image generation itself is still a real,
+    # sequential network call per beat, and a 75-beat/7-segment long video
+    # alone took 57 of the 98 minutes. Since a GitHub Actions timeout costs
+    # nothing unless actually hit, widening the ceiling is the safe lever
+    # here rather than cutting visual beat count/quality without being
+    # asked to. (Chatterbox cloned-voice TTS was evaluated the same day and
     # deferred -- ~3.7-4.4s of CPU compute per word on this runner would
     # mean ~130-150 min of TTS alone for a full day's narration, on a
     # private repo where Actions minutes are metered. Staying on edge-tts;
-    # see config.yaml's voice: block for the full writeup and
-    # .github/workflows/chatterbox-test.yml for a from-scratch retest.)
-    timeout-minutes: 100
+    # see config.yaml's voice: block for the full writeup.)
+    timeout-minutes: 160
 
     steps:
       - uses: actions/checkout@v4
