@@ -16,6 +16,10 @@ on:
         description: 'Backfill mode: override number of long-form videos to generate (blank = config default)'
         type: string
         default: ''
+      short_count:
+        description: 'Backfill mode: override number of Shorts to generate (blank = config default of 5)'
+        type: string
+        default: ''
       niche:
         description: 'Pin a specific pillar for this run instead of the day-of-year rotation (ai-ml-explained, history-turning-point, daily-life-hack, physics-paradox). Blank = default rotation.'
         type: string
@@ -80,6 +84,7 @@ jobs:
           ARGS=""
           if [ "${{ inputs.long_only }}" = "true" ]; then ARGS="$ARGS --long-only"; fi
           if [ -n "${{ inputs.long_count }}" ]; then ARGS="$ARGS --long-count=${{ inputs.long_count }}"; fi
+          if [ -n "${{ inputs.short_count }}" ]; then ARGS="$ARGS --short-count=${{ inputs.short_count }}"; fi
           if [ -n "${{ inputs.niche }}" ]; then ARGS="$ARGS --niche=${{ inputs.niche }}"; fi
           node orchestrator.js $ARGS
         env:

@@ -24,6 +24,10 @@ const DRY_RUN = process.argv.includes('--dry-run');
 const LONG_ONLY = process.argv.includes('--long-only');
 const longCountArg = process.argv.find((a) => a.startsWith('--long-count='));
 const LONG_COUNT_OVERRIDE = longCountArg ? parseInt(longCountArg.split('=')[1], 10) : null;
+// --short-count=N overrides config.video.shorts_count_per_day for one run
+// (e.g. a one-off "catch up on shorts" batch).
+const shortCountArg = process.argv.find((a) => a.startsWith('--short-count='));
+const SHORT_COUNT_OVERRIDE = shortCountArg ? parseInt(shortCountArg.split('=')[1], 10) : null;
 // --niche=<pillar-id> pins today's pillar (see lib/growth.js's
 // PROVEN_GROWTH_NICHES ids) instead of the date-keyed rotation -- for a
 // same-day retry that needs a different pillar than one already used
@@ -376,7 +380,7 @@ async function runFull() {
   }
 
   if (!LONG_ONLY && longScripts.length > 0) {
-    const shortCount = config.video?.shorts_count_per_day ?? 4;
+    const shortCount = SHORT_COUNT_OVERRIDE ?? config.video?.shorts_count_per_day ?? 4;
     const perLong = Math.ceil(shortCount / longScripts.length);
     let made = 0;
     for (const longScript of longScripts) {
