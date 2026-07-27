@@ -178,9 +178,33 @@ jobs:
             git rm -rf . >/dev/null 2>&1 || true
           fi
 
+          # `mkdir -p` + trailing `/.` on the cp source merges into an
+          # existing same-date folder instead of nesting inside it --
+          # confirmed live 2026-07-27: two separate runs parking videos on
+          # the same calendar date produced parked/2026-07-27/2026-07-27/...
+          # because `cp -r src dst` nests src inside an already-existing
+          # dst rather than merging its contents.
           DEST="parked/$(basename "$SRC_DIR")"
-          mkdir -p parked
-          cp -r "$STAGE/$(basename "$SRC_DIR")" "$DEST"
+          mkdir -p "$DEST"
+          cp -r "$STAGE/$(basename "$SRC_DIR")/." "$DEST/"
+
+          # Regular git has a hard 100MB per-file limit -- a long-form
+          # video routinely exceeds that (confirmed live 2026-07-27: a
+          # 142MB long video got the whole push rejected with "GH001:
+          # Large files detected", which would otherwise silently cost
+          # every OTHER file in the same commit their recovery path too,
+          # not just the oversized one). Drop anything too big for git
+          # specifically; the artifact-upload step above has no such limit
+          # and is still the recovery path for these.
+          find "$DEST" -type f -size +95M -print | while IFS= read -r big; do
+            echo "Skipping $big for the git branch (over git's 100MB limit) -- rely on the Actions artifact for this one."
+            rm -f "$big"
+          done
+          if [ -z "$(find "$DEST" -type f 2>/dev/null)" ]; then
+            echo "Everything for $(basename "$SRC_DIR") was over git's size limit -- nothing left to push here, rely on the Actions artifact."
+            exit 0
+          fi
+
           git add -f "$DEST"
           git commit -m "Parked videos from run ${{ github.run_id }} ($(basename "$SRC_DIR"))" || { echo "Nothing new to commit."; exit 0; }
           git push origin parked-videos
