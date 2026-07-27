@@ -27,7 +27,12 @@ export const NICHE_BY_WEEKDAY = {
     fallbackTopics: [
       'How large language models actually work',
       'AI tools that save hours every week',
-      'The history of a major AI breakthrough',
+      // Was 'The history of a major AI breakthrough' -- too vague for the
+      // LLM to write 1300+ substantive words without repeating itself
+      // (confirmed live 2026-07-25/27: failed 3 separate generation
+      // attempts on repetition/thinness). A named, well-documented event
+      // gives it real specific facts to draw on instead.
+      'How the 2017 "Attention Is All You Need" paper invented the Transformer and made ChatGPT possible',
       'How neural networks learn from data',
       'AI vs automation: what is the real difference',
       'How AI is changing jobs and education worldwide',
