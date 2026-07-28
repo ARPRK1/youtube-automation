@@ -150,6 +150,16 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
     if (kind === 'short' && totalNarrationSec > (config.video?.shorts_max_seconds ?? 120)) {
       throw new Error(`Narration too long for a Short: ${totalNarrationSec.toFixed(1)}s (must be <=${config.video?.shorts_max_seconds ?? 120}s)`);
     }
+    // No lower bound existed here at all (confirmed live 2026-07-28: Shorts
+    // were landing at 14-15s -- min_short_words/max_short_words only shaped
+    // the generation PROMPT, nothing validated the LLM's actual word count
+    // or the real post-TTS duration against a floor). Word-count-level
+    // enforcement now exists in writeShortScripts; this is the second,
+    // independent gate against real synthesized duration, same pattern as
+    // the long-form floor above.
+    if (kind === 'short' && totalNarrationSec < (config.video?.shorts_min_seconds ?? 50)) {
+      throw new Error(`Narration too short for a Short: ${totalNarrationSec.toFixed(1)}s (need ${config.video?.shorts_min_seconds ?? 50}s+)`);
+    }
 
     const fullAudioPath = path.join(runDir, `${baseName}-audio.mp3`);
     await concatSegmentAudio(audioPaths, fullAudioPath);
@@ -364,18 +374,28 @@ async function runFull() {
   // video -- see attemptLongScripts' comment -- so this check is accurate
   // for both a script that never got written and one that did but never
   // finished.)
-  if (longScripts.length === 0) {
-    log(`No long videos succeeded on "${research.topic}" -- trying a backup topic instead of giving up for the day`);
+  // Two backup attempts, not one: the depth-focused pillars (2026-07-28)
+  // pick specific, advanced, narrow topics on purpose (mechanistic
+  // interpretability, catastrophic forgetting, etc.) instead of generic
+  // 101-level ones -- confirmed live that these have a real, higher
+  // repetition-failure rate than a broad survey topic would, since a free-
+  // tier model has less redundant material to draw on for a narrow subject.
+  // A single backup wasn't enough margin against that; two keeps the "give
+  // up for the day" case rare without endlessly retrying.
+  const triedTitles = new Set([research.topic.toLowerCase()]);
+  for (let attempt = 1; longScripts.length === 0 && attempt <= 2; attempt++) {
+    log(`No long videos succeeded on "${research.topic}" -- trying backup topic ${attempt}/2 instead of giving up for the day`);
     try {
-      const backupResearch = await researchTodaysTopic(today, { excludeTitles: new Set([research.topic.toLowerCase()]), forceNicheId: NICHE_OVERRIDE });
-      log(`Backup topic: ${backupResearch.topic} (score ${backupResearch.score}/10 -- ${backupResearch.reason})`);
+      const backupResearch = await researchTodaysTopic(today, { excludeTitles: triedTitles, forceNicheId: NICHE_OVERRIDE });
+      log(`Backup topic ${attempt}/2: ${backupResearch.topic} (score ${backupResearch.score}/10 -- ${backupResearch.reason})`);
+      triedTitles.add(backupResearch.topic.toLowerCase());
       research = backupResearch;
       manifest.topic = research.topic;
       const retry = await attemptLongScripts(research);
       longScripts = retry.longScripts;
       manifest.videos.push(...retry.videos);
     } catch (err) {
-      log(`Backup topic attempt failed: ${err.message}`);
+      log(`Backup topic ${attempt}/2 attempt failed: ${err.message}`);
     }
   }
 

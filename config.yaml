@@ -12,8 +12,16 @@ video:
   long_min_minutes: 6
   long_max_minutes: 12
   shorts_count_per_day: 5
-  # Winning Shorts on this channel were 25–45s. Cap hard so scripts stay punchy.
-  shorts_max_seconds: 55
+  # Raised 2026-07-28: Shorts were landing at 14-15s of real audio and
+  # views were dropping -- min_short_words/max_short_words below shaped the
+  # generation prompt but nothing ever validated the actual output length
+  # against them (fixed in lib/script-writer.js#writeShortScripts and the
+  # post-TTS duration gate in orchestrator.js). shorts_min_seconds is the
+  # real floor; shorts_max_seconds stays a hard ceiling with real margin
+  # above the new target range so a longer, more substantive Short isn't
+  # penalized.
+  shorts_min_seconds: 50
+  shorts_max_seconds: 100
 
 voice:
   # Male voice for the global-audience pivot (2026-07-24). Chatterbox
@@ -60,9 +68,13 @@ script:
   # softMin for the matching floor on the degraded (de-repeated) path.
   min_long_words: 1300
   target_long_words: 1600
-  # Shorts spoken length ~ 80–120 words at 200 wpm ≈ 25–35s
-  min_short_words: 70
-  max_short_words: 130
+  # Raised 2026-07-28 (was 70/130, ~25-35s at the 200wpm PLANNING estimate --
+  # real measured speech on this voice is ~170wpm, and nothing enforced
+  # these as a floor anyway, so actual output was landing at 14-15s).
+  # 160-240 words targets shorts_min_seconds/shorts_max_seconds above with
+  # real margin at the measured real rate.
+  min_short_words: 160
+  max_short_words: 240
   words_per_minute: 200
   structures: [story-led, question-led, countdown, mystery]
   # Inject growth hooks / CTA directives into LLM prompts
