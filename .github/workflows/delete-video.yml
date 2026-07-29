@@ -1,0 +1,39 @@
+name: Delete a video
+
+# Manual-only cleanup tool (e.g. a duplicate upload). Requires typing the
+# exact video ID as input -- never runs on any automatic trigger.
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_id:
+        description: 'YouTube video ID to delete (the part after youtu.be/)'
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Node dependencies
+        run: npm install googleapis yaml
+
+      - name: Delete video
+        run: node scripts/delete-video.mjs "${{ inputs.video_id }}"
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
+          YOUTUBE_CHANNEL_HANDLE: modernmonkshot
