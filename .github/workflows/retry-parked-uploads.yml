@@ -1,0 +1,74 @@
+name: Retry parked video uploads
+
+# Videos land on the parked-videos branch (or, if too large for git, only
+# in a GitHub Actions artifact) almost always because YouTube's daily
+# upload/thumbnail-count cap was hit, not because anything is actually
+# wrong with them -- confirmed live 2026-07-25 through 2026-07-28, every
+# parked long video so far. That cap clears on its own; this just checks
+# back periodically instead of requiring a human to notice and manually
+# download+upload each one.
+
+on:
+  schedule:
+    # Every 6 hours, off the hour. Cheap (no rendering, just re-attempting
+    # existing files), so frequent enough to catch quota clearing same-day
+    # without hammering the API.
+    - cron: '15 */6 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  retry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm install
+
+      - name: Check out parked-videos into a separate worktree
+        id: setup_wt
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin parked-videos >/dev/null 2>&1; then
+            git fetch origin parked-videos
+            git worktree add ../parked-wt parked-videos
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No parked-videos branch exists yet -- nothing on git to retry (artifacts still checked)."
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Retry uploads
+        run: node scripts/retry-parked-uploads.mjs
+        env:
+          PARKED_WORKTREE: ${{ steps.setup_wt.outputs.exists == 'true' && '../parked-wt' || '' }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
+          YOUTUBE_CHANNEL_HANDLE: modernmonkshot
+          # Public is required for algorithm / YPP watch hours, same as the
+          # original daily job -- these are real finished videos that
+          # already passed the quality gate once, not test content.
+          YOUTUBE_PRIVACY_STATUS: ${{ vars.YOUTUBE_PRIVACY_STATUS || 'public' }}
+
+      - name: Commit and push changes to parked-videos
+        if: steps.setup_wt.outputs.exists == 'true'
+        working-directory: ../parked-wt
+        run: |
+          git add -A
+          git commit -m "Retry-upload pass: $(date -u +%Y-%m-%dT%H:%M:%SZ)" || echo "Nothing changed."
+          git push origin parked-videos || echo "Nothing to push."
