@@ -22,6 +22,12 @@ video:
   # penalized.
   shorts_min_seconds: 50
   shorts_max_seconds: 100
+  # "Draw-on" reveal for whiteboard/diagram AI beats (2026-07-29): the
+  # first slice of the beat progressively uncovers the image (like it's
+  # being drawn on a whiteboard, with a marker-bar cue), then holds/pans
+  # exactly as before -- see lib/visuals.js#renderWhiteboardRevealClip.
+  # Kill switch if a live run looks wrong -- flip false, no code revert.
+  whiteboard_reveal_enabled: true
 
 voice:
   # Male voice for the global-audience pivot (2026-07-24). Chatterbox
