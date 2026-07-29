@@ -17,6 +17,14 @@
 //     else) to avoid re-uploading the same video twice across scheduled
 //     runs.
 //
+// A single video is sometimes saved to BOTH sources as intentional
+// redundancy (daily.yml's artifact-upload step and its parked-videos-branch
+// push both run, belt-and-suspenders) -- confirmed live 2026-07-29: without
+// cross-source dedup, this script uploaded "ai explained" twice, once from
+// each copy. state.uploadedTitles (same state file as above) tracks every
+// title this script has ever successfully uploaded, checked before EITHER
+// source attempts a video, so the two copies resolve to one upload.
+//
 // Expects PARKED_WORKTREE env var pointing at a checkout of the
 // parked-videos branch (see .github/workflows/retry-parked-uploads.yml,
 // which uses `git worktree add` rather than switching the main checkout's
@@ -38,11 +46,19 @@ function gh(args) {
   return execFileSync('gh', args, { encoding: 'utf-8' });
 }
 
+function normalizeTitle(title) {
+  return String(title || '').trim().toLowerCase();
+}
+
 async function loadState() {
   try {
-    return JSON.parse(await readFile(STATE_FILE, 'utf-8'));
+    const parsed = JSON.parse(await readFile(STATE_FILE, 'utf-8'));
+    return {
+      processedArtifactIds: parsed.processedArtifactIds || [],
+      uploadedTitles: parsed.uploadedTitles || []
+    };
   } catch {
-    return { processedArtifactIds: [] };
+    return { processedArtifactIds: [], uploadedTitles: [] };
   }
 }
 
@@ -81,7 +97,7 @@ async function tryUpload(videoPath, thumbPath, metadata, label) {
   }
 }
 
-async function retryGitBranchVideos() {
+async function retryGitBranchVideos(uploadedTitles) {
   if (!existsSync(PARKED_DIR)) return { attempted: 0, uploaded: [] };
   const entries = await readdir(PARKED_DIR, { withFileTypes: true });
   const dateDirs = entries.filter((d) => d.isDirectory()).map((d) => d.name);
@@ -100,9 +116,20 @@ async function retryGitBranchVideos() {
       const videoPath = path.join(dir, mp4);
       if (!existsSync(metaPath)) continue;
       const metadata = JSON.parse(await readFile(metaPath, 'utf-8'));
+      const key = normalizeTitle(metadata.title);
+      if (uploadedTitles.has(key)) {
+        // Already went live via the other source (or earlier in this same
+        // pass) -- this copy is now redundant, not still-pending.
+        console.log(`[retry-parked] "${metadata.title}" already uploaded elsewhere, removing this redundant copy (git:${dateDir}/${base})`);
+        await rm(videoPath, { force: true });
+        await rm(thumbPath, { force: true });
+        await rm(metaPath, { force: true });
+        continue;
+      }
       attempted++;
       const result = await tryUpload(videoPath, thumbPath, metadata, `git:${dateDir}/${base}`);
       if (result.ok) {
+        uploadedTitles.add(key);
         uploaded.push({ title: metadata.title, url: result.url, source: `git:${dateDir}/${base}` });
         await rm(videoPath, { force: true });
         await rm(thumbPath, { force: true });
@@ -121,9 +148,8 @@ async function retryGitBranchVideos() {
   return { attempted, uploaded };
 }
 
-async function retryArtifactVideos() {
+async function retryArtifactVideos(state, uploadedTitles) {
   if (!REPO) return { attempted: 0, uploaded: [] };
-  const state = await loadState();
   const processed = new Set(state.processedArtifactIds);
 
   let artifacts = [];
@@ -171,9 +197,15 @@ async function retryArtifactVideos() {
         if (!existsSync(metaPath)) continue;
         sawAny = true;
         const metadata = JSON.parse(await readFile(metaPath, 'utf-8'));
+        const key = normalizeTitle(metadata.title);
+        if (uploadedTitles.has(key)) {
+          console.log(`[retry-parked] "${metadata.title}" already uploaded elsewhere, skipping this redundant copy (artifact:${artifact.name}/${base})`);
+          continue;
+        }
         attempted++;
         const result = await tryUpload(videoPath, thumbPath, metadata, `artifact:${artifact.name}/${base}`);
         if (result.ok) {
+          uploadedTitles.add(key);
           uploaded.push({ title: metadata.title, url: result.url, source: `artifact:${artifact.name}` });
         } else {
           allOk = false;
@@ -181,13 +213,13 @@ async function retryArtifactVideos() {
       }
     }
     await rm(stageDir, { recursive: true, force: true }).catch(() => {});
-    // Only mark processed once every video in the artifact uploaded clean --
-    // a partial failure should keep the whole artifact eligible for the
-    // next scheduled attempt.
+    // Only mark processed once every video in the artifact uploaded clean
+    // (or was skipped as an already-uploaded duplicate) -- a genuine
+    // failure should keep the whole artifact eligible for the next
+    // scheduled attempt.
     if (sawAny && allOk) state.processedArtifactIds.push(artifact.id);
   }
 
-  await saveState(state);
   return { attempted, uploaded };
 }
 
@@ -196,8 +228,17 @@ async function main() {
     console.log('[retry-parked] No YouTube credentials configured, nothing to do.');
     return;
   }
-  const fromGit = await retryGitBranchVideos();
-  const fromArtifacts = await retryArtifactVideos();
+  const state = await loadState();
+  const uploadedTitles = new Set(state.uploadedTitles.map(normalizeTitle));
+
+  // Git branch first: it's the cheaper, more authoritative source (no
+  // download needed, self-cleaning), so when a title exists in both places
+  // the git copy wins and the artifact copy gets skipped as redundant.
+  const fromGit = await retryGitBranchVideos(uploadedTitles);
+  const fromArtifacts = await retryArtifactVideos(state, uploadedTitles);
+
+  state.uploadedTitles = [...uploadedTitles];
+  await saveState(state);
 
   const allUploaded = [...fromGit.uploaded, ...fromArtifacts.uploaded];
   const totalAttempted = fromGit.attempted + fromArtifacts.attempted;
