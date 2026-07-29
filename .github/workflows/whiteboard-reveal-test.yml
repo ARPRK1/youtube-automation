@@ -1,0 +1,41 @@
+name: Whiteboard reveal smoke test
+
+# Manual-only validation of the draw-on reveal effect (lib/visuals.js)
+# against this repo's real Actions-runner ffmpeg build, using a synthetic
+# test image -- no LLM calls, no YouTube upload, no daily-pipeline cost.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version | head -1
+
+      - name: Install Node dependencies
+        run: npm install yaml
+
+      - name: Run smoke test
+        run: node scripts/whiteboard-reveal-smoke.mjs
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: whiteboard-reveal-smoke
+          path: wb-smoke-out.mp4
+          retention-days: 3
