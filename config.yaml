@@ -58,7 +58,12 @@ topics:
     - daily-life-hack
     - physics-paradox
   sources:
-    google_trends_india: true
+    # Was true but never actually wired to anything until 2026-07-29 (see
+    # lib/research.js) -- fetchIndiaTrendingNow ran unconditionally,
+    # leaking off-brand India-trending topics (e.g. "Batwara 1947") into
+    # the backup-topic pool despite the universal/global pivot. Off now
+    # that the flag is actually respected.
+    google_trends_india: false
     google_news: true
     youtube_trending: true
     reddit: false

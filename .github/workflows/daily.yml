@@ -2,10 +2,10 @@ name: Daily video generation
 
 on:
   schedule:
-    # 13:30 UTC (empirically decent evening window across US/EU/IN
-    # timezones for a global audience). Off the hour to dodge the
-    # on-the-hour cron pile-up.
-    - cron: '30 13 * * *'
+    # 12:30 UTC = 6:00 PM IST (2026-07-29: moved earlier at the user's
+    # request so a failed run still leaves troubleshooting time same
+    # evening, IST). Off the hour to dodge the on-the-hour cron pile-up.
+    - cron: '30 12 * * *'
   workflow_dispatch:
     inputs:
       long_only:
