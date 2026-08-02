@@ -114,6 +114,15 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
     const usedMediaUrls = new Set();
 
     for (const [i, seg] of videoScript.segments.entries()) {
+      // Confirmed live 2026-07-27 (run #48): a video died with "No real
+      // media found... AI fallback also failed" after a 31-minute gap with
+      // zero log output in between -- TTS + media sourcing for every
+      // segment happens in this one loop with nothing printed per
+      // iteration, so there was no way to tell which segment or which
+      // stage (TTS vs. media) the time actually went to. One line per
+      // segment costs nothing and makes the next one of these diagnosable
+      // instead of a 31-minute blank spot in the log.
+      log(`[produce] "${videoScript.title}" segment ${i + 1}/${videoScript.segments.length}: synthesizing audio + sourcing media`);
       const { audioPath, srtPath, durationSec, hadPause } = await synthesizeSegmentAudio(seg.text, runDir, `${baseName}-seg${i}`);
       audioPaths.push(audioPath);
       const capSrtPath = path.join(runDir, `${baseName}-seg${i}-cap.srt`);

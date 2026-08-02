@@ -34,11 +34,14 @@ voice:
   # (the user's own cloned voice, voice-sample/reference.wav) was measured
   # live first: ~3.7-4.4s of CPU compute per word on GitHub's free-tier
   # runner -- a full day's narration (~2000 words) would need ~130-150 min
-  # of TTS alone, and this repo is private so Actions minutes are metered,
-  # not free. Staying on edge-tts (free, ~instant, zero added run time)
-  # until a cheaper way to run Chatterbox exists (e.g. a self-hosted
-  # runner with a GPU). en-US-AndrewNeural is already lib/tts.js's built-in
-  # default male voice.
+  # of TTS alone. Originally deferred because the repo was believed private
+  # (Actions minutes metered). That premise is void -- repo is public now
+  # (see the matching note on daily.yml's timeout-minutes) -- but Chatterbox
+  # is still deferred for long-form: 107 min of TTS alone for a 1600-word
+  # script doesn't fit inside the render/upload pipeline within the 160 min
+  # timeout. See Phase 5 of CLAUDE-CODE-BRIEF for the Shorts-only plan
+  # (Shorts' shorter word count does fit). en-US-AndrewNeural is
+  # lib/tts.js's built-in default male voice, used for long-form.
   provider: edge-tts
   edge_tts_voice: en-US-AndrewNeural
   kokoro_voice: af_heart
