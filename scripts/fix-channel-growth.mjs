@@ -11,20 +11,20 @@ const auth = new google.auth.OAuth2(
 auth.setCredentials({ refresh_token: process.env.YOUTUBE_REFRESH_TOKEN });
 const yt = google.youtube({ version: 'v3', auth });
 
-const CHANNEL_DESC = `ModernMonk — sharp India stories in under a minute.
+const CHANNEL_DESC = `ModernMonk — India stories that actually stick.
 
-Money habits. Food origins. History twists. Hidden places.
+Food origin secrets. Simple money habits. History with a twist. Hidden places.
 Every claim sourced. Zero fluff. Built for curious Indians (and anyone who loves India).
 
-What you get every week:
-• One food origin story that actually surprises you
-• Simple money lessons without guru nonsense
-• History "one decision" moments
+What you get:
+• Food origin Shorts that surprise you in under 45 seconds
+• Money lessons without guru nonsense
+• "One decision" history moments
 • Places locals know and tourists miss
 
-Subscribe if you want one useful India story a day — not noise.
+Subscribe for one sharp India story a day — not noise.
 
-Instagram-free. Drama-free. Scroll-stopping facts only.`;
+#India #Shorts #Food #Money #History`;
 
 console.log('=== 1) Channel made-for-kids + branding ===');
 const chList = await yt.channels.list({ part: ['snippet', 'status', 'brandingSettings'], mine: true });
@@ -49,19 +49,23 @@ try {
   console.error('Channel status update failed:', err.message);
 }
 try {
+  // YouTube requires a fuller snippet object on update (title alone is not enough).
   await yt.channels.update({
     part: ['snippet'],
     requestBody: {
       id: ch.id,
       snippet: {
         title: ch.snippet.title,
-        description: CHANNEL_DESC
+        description: CHANNEL_DESC,
+        defaultLanguage: ch.snippet.defaultLanguage || 'en',
+        country: ch.snippet.country || 'IN'
       }
     }
   });
   console.log('Channel description OK');
 } catch (err) {
   console.error('Channel description update failed:', err.message);
+  console.error('  Fix manually in Studio → Customization → Basic info if needed.');
 }
 try {
   await yt.channels.update({

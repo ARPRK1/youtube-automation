@@ -21,7 +21,7 @@ on:
         type: string
         default: ''
       niche:
-        description: 'Pin a specific pillar for this run instead of the day-of-year rotation (ai-ml-explained, history-turning-point, daily-life-hack, physics-paradox). Blank = default rotation.'
+        description: 'Pin a pillar for this run (indian-food-story, indian-money-simple, india-history-twist, india-place-secret). Blank = weighted rotation (food-heavy).'
         type: string
         default: ''
 

@@ -2,19 +2,18 @@
 
 A small, free, token-free daily pipeline: writes a script (Groq/Gemini free tier), narrates it (Microsoft Edge TTS, free, no key), renders it with FFmpeg (background + burned-in captions), and uploads to YouTube (real Data API v3 upload, not a stub). Scheduled by GitHub Actions, not by OpenClaw's own cron — this never spends Claude/Fable tokens.
 
-Daily output: **2 long-form videos (10+ min) + 4 Shorts** for that day's niche (6 uploads/day total — YouTube's free API quota is 10,000 units/day and an upload costs 1,600 units, so 6/day is the safe ceiling without requesting a quota increase).
+Daily output (90-day growth mode): **5 Shorts first (25–45s) + 1 long-form (6–12 min)** — Shorts never wait on long-form. Free API quota: ~9,600 units/day of 10,000.
 
-Content is **India-focused by default**, except where the subject is inherently global (AI). Niche rotates by day of week — see `niches.js`:
+**Channel:** [@modernmonkshot](https://youtube.com/@modernmonkshot) — India stories only (food origins dominate; that is the only cluster that hit 1k+ views). See `MONETIZATION_90DAY.md` for the live audit and plan.
 
-| Day | Niche |
-|---|---|
-| Mon | Indian Stock Market & Finance |
-| Tue | AI & Education (global) |
-| Wed | Indian Mystery & History |
-| Thu | Indian Food & Culture |
-| Fri | Indian Tourism & Places |
-| Sat | Bollywood, Cricket & Entertainment |
-| Sun | India Week Updates & Trending |
+Weighted pillars (not random thrash) — see `lib/growth.js` + `niches.js`:
+
+| Pillar | Weight | Why |
+|---|---|---|
+| Indian food origin stories | 4 | Proven 1k+ view Shorts |
+| Simple Indian money habits | 2 | Evergreen IN demand |
+| India history with a twist | 2 | Mid-pack winners |
+| Hidden India places | 1 | Visual Shorts fuel |
 
 ### How today's topic is chosen
 
@@ -77,7 +76,14 @@ Create a new (can be private) GitHub repo, push this folder to it, then under **
 - `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, `YOUTUBE_REFRESH_TOKEN`
 - `PEXELS_API_KEY` (optional)
 
-The workflow in `.github/workflows/daily.yml` runs daily at 03:33 UTC (~9:03am IST) and can also be triggered manually from the Actions tab (`workflow_dispatch`).
+The workflow in `.github/workflows/daily.yml` runs daily at 12:30 UTC (~6:00pm IST) and can also be triggered manually from the Actions tab (`workflow_dispatch`). Pin a pillar with the `niche` input, e.g. `indian-food-story`.
+
+Growth tools (free):
+
+```
+npm run growth:report        # live YPP progress dashboard
+npm run growth:fix-channel  # not-kids + branding keywords
+```
 
 ## Local testing (do this before enabling the schedule)
 

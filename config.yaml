@@ -1,97 +1,59 @@
 # ModernMonk 90-day monetization config.
 # Target: YouTube Partner Program (1k subs + 4k watch hours OR 10M Shorts views / 90d).
-# Strategy: PUBLIC Shorts-first, niche coherence, NOT made-for-kids.
-# Pillars (2026-07-24): AI/ML explained, history turning points, daily-life
-# hacks, physics/logic paradoxes -- universal, diagram-native content.
+#
+# BOLD STRATEGY 2026-08-04 (expert audit of live channel data):
+# - REVERT physics/AI/abstract pivot — those Shorts get 0–67 views
+# - DOUBLE DOWN on India food origins (only cluster with 1k+ views)
+# - Shorts-first, 25–45s (winner length), public, NOT made-for-kids
+# - Hybrid media (real food/place photos > pure whiteboard AI)
 
 video:
-  # Shorts path is the realistic automation route to early views/subs.
-  # 1 long + 6 Shorts = 7 uploads/day * 1600 units = 11,200 — slightly over
-  # free 10k/day, so 1 long + 5 Shorts = 9,600 units (safe under 10k).
+  # 1 long + 5 Shorts = 9,600 quota units (safe under free 10k/day).
+  # Shorts are the growth engine; long is optional session-time fuel.
   long_count_per_day: 1
   long_min_minutes: 6
   long_max_minutes: 12
   shorts_count_per_day: 5
-  # Raised 2026-07-28: Shorts were landing at 14-15s of real audio and
-  # views were dropping -- min_short_words/max_short_words below shaped the
-  # generation prompt but nothing ever validated the actual output length
-  # against them (fixed in lib/script-writer.js#writeShortScripts and the
-  # post-TTS duration gate in orchestrator.js). shorts_min_seconds is the
-  # real floor; shorts_max_seconds stays a hard ceiling with real margin
-  # above the new target range so a longer, more substantive Short isn't
-  # penalized.
-  shorts_min_seconds: 50
-  shorts_max_seconds: 100
-  # "Draw-on" reveal for whiteboard/diagram AI beats (2026-07-29): the
-  # first slice of the beat progressively uncovers the image (like it's
-  # being drawn on a whiteboard, with a marker-bar cue), then holds/pans
-  # exactly as before -- see lib/visuals.js#renderWhiteboardRevealClip.
-  # Kill switch if a live run looks wrong -- flip false, no code revert.
+  # LIVE DATA: winning Shorts were 27–42s. The 50–100s floor (2026-07-28)
+  # produced longer abstract lectures that die on the shelf for a 16-sub
+  # channel. Floor is soft (reject only true stubs); ceiling is hard.
+  shorts_min_seconds: 20
+  shorts_max_seconds: 55
   whiteboard_reveal_enabled: true
 
 voice:
-  # Male voice for the global-audience pivot (2026-07-24). Chatterbox
-  # (the user's own cloned voice, voice-sample/reference.wav) was measured
-  # live first: ~3.7-4.4s of CPU compute per word on GitHub's free-tier
-  # runner -- a full day's narration (~2000 words) would need ~130-150 min
-  # of TTS alone. Originally deferred because the repo was believed private
-  # (Actions minutes metered). That premise is void -- repo is public now
-  # (see the matching note on daily.yml's timeout-minutes) -- but Chatterbox
-  # is still deferred for long-form: 107 min of TTS alone for a 1600-word
-  # script doesn't fit inside the render/upload pipeline within the 160 min
-  # timeout. See Phase 5 of CLAUDE-CODE-BRIEF for the Shorts-only plan
-  # (Shorts' shorter word count does fit). en-US-AndrewNeural is
-  # lib/tts.js's built-in default male voice, used for long-form.
+  # India-topic content converts better with en-IN neural voice.
   provider: edge-tts
-  edge_tts_voice: en-US-AndrewNeural
+  edge_tts_voice: en-IN-NeerjaNeural
   kokoro_voice: af_heart
   reference_sample: voice-sample/reference.wav
   chatterbox_exaggeration: 0.5
 
 topics:
-  # Focused mode: bias research toward the channel's new universal, diagram-
-  # friendly pillars (AI/ML, history turning points, daily hacks, physics
-  # paradoxes) instead of the old India-only food/money/history/places set.
-  # Still uses live trends, but scores proven-niche candidates higher.
   mode: growth-focused
   avoid_repeat_days: 21
   primary_niches:
-    - ai-ml-explained
-    - history-turning-point
-    - daily-life-hack
-    - physics-paradox
+    - indian-food-story
+    - indian-money-simple
+    - india-history-twist
+    - india-place-secret
   sources:
-    # Was true but never actually wired to anything until 2026-07-29 (see
-    # lib/research.js) -- fetchIndiaTrendingNow ran unconditionally,
-    # leaking off-brand India-trending topics (e.g. "Batwara 1947") into
-    # the backup-topic pool despite the universal/global pivot. Off now
-    # that the flag is actually respected.
-    google_trends_india: false
+    # Re-enable India trends — we are an India story channel again.
+    google_trends_india: true
     google_news: true
-    youtube_trending: true
+    # YouTube trending is noisy (Marvel, sports scores). Off by default;
+    # curated banks + Google News already feed enough candidates.
+    youtube_trending: false
     reddit: false
 
 script:
-  # Raised 1000 -> 1300 (2026-07-25): words_per_minute below is a PLANNING
-  # estimate, not the real synthesized rate -- measured real speech on the
-  # current voice is ~170 wpm, so 1000 words could (and 3 of 4 pillar runs
-  # this same day did) produce under 360s of real audio, failing
-  # orchestrator.js's post-TTS duration gate only after the full ~50-60 min
-  # script+TTS+visual pipeline already ran. 1300 words clears 360s with
-  # real margin even at a slower-than-measured rate. See lib/script-writer.js
-  # softMin for the matching floor on the degraded (de-repeated) path.
-  min_long_words: 1300
-  target_long_words: 1600
-  # Raised 2026-07-28 (was 70/130, ~25-35s at the 200wpm PLANNING estimate --
-  # real measured speech on this voice is ~170wpm, and nothing enforced
-  # these as a floor anyway, so actual output was landing at 14-15s).
-  # 160-240 words targets shorts_min_seconds/shorts_max_seconds above with
-  # real margin at the measured real rate.
-  min_short_words: 160
-  max_short_words: 240
-  words_per_minute: 200
+  min_long_words: 1100
+  target_long_words: 1500
+  # ~70–120 words ≈ 25–45s at ~170 wpm real speech (en-IN neural).
+  min_short_words: 70
+  max_short_words: 120
+  words_per_minute: 170
   structures: [story-led, question-led, countdown, mystery]
-  # Inject growth hooks / CTA directives into LLM prompts
   growth_mode: true
 
 media:
@@ -100,23 +62,14 @@ media:
   allowed_licenses: [pd, cc0, by, by-sa]
   ai_fallback_enabled: true
   verify_relevance: true
-  # ai-only: skip the real-media search + vision-verify chain entirely and
-  # go straight to AI-generated whiteboard/diagram visuals (see
-  # lib/media-sourcing.js#sourceMediaForSegment). Fits this channel's new
-  # AI/ML, history, hacks, and physics-paradox pillars -- diagram/sketch
-  # content has nothing real to search for or verify a photo against -- and
-  # fixes the 90-minute-timeout bottleneck confirmed live on 2026-07-22/23
-  # (up to 16 vision-LLM calls per entity in the old real-media chain).
-  mode: ai-only
-  # Multi-beat visuals: cut every N seconds with AI whiteboard/diagram/ink/
-  # cinematic variants so videos never freeze on one still.
+  # hybrid (default): real stock first for food/places, AI fallback.
+  # ai-only was correct for abstract physics; wrong for food origin stories.
+  mode: hybrid
   visual_beat_seconds_short: 3.2
   visual_beat_seconds_long: 4.8
   max_visual_beats_short: 12
   max_visual_beats_long: 16
 
-# Music: Shorts stay voice-only (better retention). Long-form gets a quiet
-# bed only when long enough; never wall-to-wall loud beds.
 music:
   enabled: true
   shorts: false
@@ -127,10 +80,7 @@ upload:
   enabled: true
   # CRITICAL: unlisted = zero algorithm. Public is required for growth.
   privacy_status: public
-  # Never mark as made for kids (channel-level was killing reach/comments).
   made_for_kids: false
-  # Education (27) is fine for long; Shorts often perform as Entertainment (24)
-  # or People & Blogs (22). We set per-kind in code.
   category_id_long: '27'
   category_id_short: '24'
   channel_id: UCv8n_ykbynzj6-gwdwX6loA
@@ -141,7 +91,6 @@ paths:
   ready_to_upload_dir: ready_to_upload
 
 growth:
-  # Soft targets used only for logging / daily report (not hard fails).
   target_subs_90d: 1000
   target_shorts_views_90d: 10000000
-  daily_shorts_view_goal: 120000
+  daily_shorts_view_goal: 50000

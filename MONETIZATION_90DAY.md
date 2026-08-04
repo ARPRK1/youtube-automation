@@ -1,106 +1,144 @@
-# ModernMonk — 90-Day Monetization Plan
+# ModernMonk — 90-Day Monetization Plan (Updated)
 
 **Channel:** [@modernmonkshot](https://youtube.com/@modernmonkshot) (`UCv8n_ykbynzj6-gwdwX6loA`)  
-**Audit date:** 2026-07-21  
-**Goal:** YouTube Partner Program eligibility as early as possible within 90 days.
+**Audit date:** 2026-08-04  
+**Goal:** YouTube Partner Program eligibility within 90 days.
 
 ---
 
-## 1. Expert audit — why growth was flat
+## 1. Current status report (live API, 2026-08-04)
 
-| Finding | Impact | Evidence |
-|--------|--------|----------|
-| **Channel was “Made for kids”** | Critical | `selfDeclaredMadeForKids: true` — kills comments, notifications, personalized recs, most ads |
-| **Default upload privacy = unlisted** | Critical | Algorithm never sees unlisted; zero growth path |
-| **Topic thrash (topic-agnostic)** | High | Food one day, trains next, Bollywood, history — no coherent “what this channel is” for the algorithm |
-| **Weak engagement loops** | High | 0–14 likes, ~0 comments on most videos; no CTA in scripts |
-| **Shorts not optimized for shelf** | Medium | Mixed length, weak first-second hooks, #Shorts inconsistently applied |
-| **Brand new channel** | Context | Created 2026-07-02; 6 subs / ~9.2k views — early stage, not “dead” |
-| **What works** | Opportunity | Food origin Shorts hit **1k–1.1k views** (Butter Chicken, Fusion, Spice Route) |
+| Metric | Value | Notes |
+|--------|-------|--------|
+| Subscribers | **16** | Need 1,000 |
+| Lifetime views | **~15,026** | |
+| Videos | **117** | High volume, low conversion |
+| Made for kids | **false** | Fixed (was critical blocker) |
+| Privacy | **All public** | Fixed (was unlisted) |
+| Monetization | **Not enabled** | Below YPP thresholds |
+| Channel age | ~33 days (created 2026-07-02) | Early stage |
 
-### YPP bar (public requirements)
+### What actually worked (top Shorts by views)
 
-1. **1,000 subscribers**, and  
-2. **4,000 public watch hours** (12 months) **or** **10M valid public Shorts views** (90 days)
+| Title | Views | Length | Pattern |
+|-------|------:|-------:|---------|
+| Butter Chicken's Wild West | 1,169 | 37s | Food origin |
+| Food Fight | 1,127 | 29s | Food |
+| Fusion Frenzy | 1,082 | 27s | Food |
+| Spice Route | 1,047 | 42s | Food / spice history |
+| Hydrogen Train | 860 | 35s | One-off news |
+| One Decision | 777 | 41s | History twist |
 
-With automation, **Shorts velocity + one clear niche** is the realistic path.
+### What is failing (recent uploads)
 
----
+| Title | Views | Problem |
+|-------|------:|---------|
+| Einstein's Challenge | 67 | Off-brand abstract physics |
+| Reality Not Weird | 48 | Quantum / abstract |
+| Black Hole Paradox | 16 | Dead niche for this channel |
+| Quantum Mechanics (long) | 0 | Long + wrong pillar |
+| China's Five Year Plan | 0–30 | Off-brand geo-politics |
 
-## 2. Strategy (from patterns of large faceless/educational Shorts channels)
-
-1. **One identity:** India stories — food origins, simple money, history twists, hidden places.  
-2. **Public only** — no unlisted “production” uploads.  
-3. **Not made for kids** — channel + every video.  
-4. **Shorts-first:** 5 Shorts + 1 long/day (under free API quota).  
-5. **25–45s Shorts** — matches your winners; hard cap 55s.  
-6. **Hook in sentence 1** — pattern interrupt (MrBeast/faceless Shorts standard).  
-7. **Soft CTA** — “follow for the next one” / yes-no question (MrWhoseTheBoss / Kurzgesagt-style soft close, not hard sell).  
-8. **SEO titles** — curiosity + specificity + `#Shorts`.  
-9. **Thumbnails** — high-CTR bold type (already shipped).  
-10. **Evening IST publish** — 19:00 IST cron for IN mobile peak.  
-11. **Double down on winners** — research scorer boosts food/money/history/places.  
-12. **Volume with quality gates** — still refuse thin/repetitive scripts; better one good Short than three weak ones.  
-13. **Playlists by pillar** (manual once: Food / Money / History / Places).  
-14. **Community tab / pinned comment** — manual 2×/week until API bot is worth it.  
-15. **End long-form with subscribe CTA** — in narration (no paid end-screen tools).  
-16. **Free stack only:** edge-tts, Groq/Gemini free, Pexels/Pixabay, Wikimedia, YouTube Data API, ffmpeg, Remotion.
+**Verdict:** The 2026-07-24 pivot to AI/ML + physics + daily hacks **destroyed the growth curve**. Food Shorts at 25–45s are the only proven product-market fit.
 
 ---
 
-## 3. Math (rough, directional)
+## 2. Root causes (expert YouTuber lens)
 
-| Path | Need | At 5 Shorts/day |
-|------|------|------------------|
-| Shorts views | 10M / 90d ≈ **111k views/day** | Requires viral tail — unlikely day 1; still best *attempt* for automation |
-| Subs + hours | 1k subs + 4k hours | More realistic if avg Short gets 2–10k views over weeks + 1 long for session time |
-
-**Operating target (automation):**  
-- Publish **6 public videos/day** (5 Shorts + 1 long)  
-- Optimize for **1k+ views on best Shorts** (already proven on food)  
-- Track weekly: subs, Shorts views, top title patterns  
+1. **Identity thrash** — Algorithm cannot recommend a channel that is food one week, Spider-Man the next, quantum the next.
+2. **Wrong Shorts length** — Forced 50–100s abstract lectures; winners were 27–42s.
+3. **Long-form gated Shorts** — If long failed (thin topic / TTS floor), the day shipped **zero Shorts**.
+4. **Abstract “deep” topics** — Hard for free LLM to script without repetition; hard for mobile Shorts retention.
+5. **Channel branding lag** — Description still read as generic finance/life, not food-story identity.
+6. **Volume without series** — 117 videos, 16 subs = distribution without retention/brand.
 
 ---
 
-## 4. What shipped in code (runs from next cron)
+## 3. Bold decisions (implemented in code 2026-08-04)
+
+| Decision | Why |
+|----------|-----|
+| **Revert pillars to India food (weight 4) + money (2) + history (2) + places (1)** | Only food cluster hit 1k+ |
+| **Hard-ban off-brand topics** (quantum, Marvel, Zeigarnik, etc.) | Proven 0–67 view killers |
+| **Shorts-first pipeline** | Shorts upload before any long render |
+| **Shorts independent of long** | Failed long no longer zeros the day |
+| **25–45s target (20–55 hard bounds)** | Match winner distribution |
+| **en-IN neural voice** | India audience conversion |
+| **Hybrid media (not AI-only)** | Food needs real-looking visuals |
+| **India trends ON, YT US trending OFF** | Reduce Marvel/score noise |
+| **Growth report script** | Weekly truth, not vibes |
+
+---
+
+## 4. Math (honest)
+
+| Path | Need | Reality check |
+|------|------|----------------|
+| Shorts YPP | 10M views / 90d ≈ **111k views/day** | Needs viral tail; automation alone rarely hits this |
+| Classic YPP | **1k subs + 4k watch hours** | More realistic if food Shorts keep hitting 1k–10k and longs add hours |
+
+**Operating targets (next 90 days):**
+
+- Ship **5 public Shorts/day** on food/money/history/places only  
+- Optimize for **repeat 1k+ view Shorts** (already proven once)  
+- **1 long/day** only as secondary (watch hours), never blocks Shorts  
+- Weekly: run `node scripts/channel-growth-report.mjs`  
+- Goal line: **1,000 subs** first; watch hours via longs + binge sessions  
+
+---
+
+## 5. 90-day playbook
+
+### Days 1–14 (this week + next)
+- [x] Code: niche revert, Shorts-first, length fix, off-brand ban  
+- [ ] Run `node scripts/fix-channel-growth.mjs` (branding + kids)  
+- [ ] Studio: confirm “not made for kids”  
+- [ ] Create 4 playlists: Food Origins / Money / History / Places  
+- [ ] Feature best food Short as channel trailer  
+- [ ] Manual trigger: `niche=indian-food-story` for 3 days straight  
+
+### Days 15–45
+- Double down on any Short that hits 500+ views (same dish/angle sequel)  
+- Pin comment on every long: “Food, money, or history next?”  
+- Share 1 best Short/day to Reddit (value-first, no spam)  
+- Kill any week that drifts off pillars (report script flags `off-brand-abstract`)  
+
+### Days 46–90
+- If subs &lt; 200: increase food weight further / cut longs to free quota for 6 Shorts  
+- If one Short breaks 10k+: make a 5-part series on that dish/theme  
+- Apply to YPP the day thresholds clear — do **not** buy subs/views  
+
+---
+
+## 6. Manual checklist (30 min, free)
+
+1. Studio → Settings → Channel → Advanced → Audience → **Not made for kids**  
+2. Playlists: Food / Money / History / Places  
+3. Feature a 1k-view food Short  
+4. Run growth report weekly  
+5. Never buy engagement  
+
+---
+
+## 7. Code map (this update)
 
 | Change | File(s) |
 |--------|---------|
-| `privacy_status: public` | `config.yaml`, workflow env |
-| Shorts-first counts (1 long + 5 Shorts, 55s cap) | `config.yaml` |
-| Growth niche scoring + pillar seeds | `lib/growth.js`, `lib/research.js` |
-| Hook/CTA script directives | `lib/script-writer.js` |
-| Title/description/tag optimizers | `lib/growth.js` |
-| Upload: public, not kids, Shorts category + `#Shorts` title | `lib/youtube-upload.js` |
-| India neural voice preference | `config.yaml`, `lib/tts.js` fallback |
-| Cron **19:00 IST** (`30 13 * * *`) | `.github/workflows/daily.yml` |
-| Fixed 4 legacy “made for kids” videos | `scripts/fix-channel-growth.mjs` |
-| High-CTR thumbnails | `lib/thumbnail.js` (prior) |
-| Channel lock to ModernMonkShot | `lib/youtube-upload.js` (prior) |
+| Proven India pillars + off-brand ban | `lib/growth.js`, `niches.js` |
+| Config: Shorts length, voice, hybrid media | `config.yaml` |
+| Research scoring + India trends | `lib/research.js` |
+| Shorts-first orchestrator | `orchestrator.js` |
+| Shorts scripts standalone | `lib/script-writer.js` |
+| Niche workflow input text | `.github/workflows/daily.yml` |
+| Branding | `scripts/fix-channel-growth.mjs` |
+| Dashboard | `scripts/channel-growth-report.mjs` |
 
 ---
 
-## 5. Your manual checklist (30 minutes, free)
+## 8. Honest note
 
-1. **Studio → Settings → Channel → Advanced → Audience**  
-   Confirm **“No, set this channel as not made for kids.”**  
-2. **Playlists:** create Food Origins / Money / History / Places; add existing winners.  
-3. **Channel trailer / feature** a 1k-view food Short.  
-4. **Pin a comment** on new longs: “Which story next — food, money, or history?”  
-5. **Do not** buy subs/views (ban risk; kills YPP).  
-6. Optional free distribution: share 1 Short/day to Reddit r/India / finance / food (no spam; value first).
+Automation can **publish and package** at scale. It cannot force virality.  
+The previous setup (kids + unlisted + niche thrash + abstract pivot) almost guaranteed flat growth.  
+This setup removes those blockers and **only ships the content type that already got 1k views**.  
 
----
-
-## 6. Weekly review (automation + you)
-
-- [ ] Subs delta  
-- [ ] Shorts views (Studio → Analytics → Content)  
-- [ ] Top 3 titles — reverse into `growth.js` hooks if a new pattern wins  
-- [ ] Any video still kids/unlisted? Re-run `node scripts/fix-channel-growth.mjs`  
-
----
-
-## 7. Honest CTO note
-
-Automation can **fix, package, and publish** at scale. It cannot guarantee virality. The previous setup (kids flag + unlisted + niche thrash) almost guaranteed *no* growth. The new setup removes those blockers and aligns with what already got you 1k-view Shorts. **90-day monetization is ambitious but possible** if a few Shorts break out; the code is now aimed at that, not at quiet unlisted archiving.
+**90-day monetization is ambitious.** Hitting 1k subs is the primary realistic gate; 10M Shorts views is the stretch. The code is now aimed at the former without fantasizing the latter.

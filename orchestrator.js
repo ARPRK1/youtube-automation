@@ -166,8 +166,10 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
     // enforcement now exists in writeShortScripts; this is the second,
     // independent gate against real synthesized duration, same pattern as
     // the long-form floor above.
-    if (kind === 'short' && totalNarrationSec < (config.video?.shorts_min_seconds ?? 50)) {
-      throw new Error(`Narration too short for a Short: ${totalNarrationSec.toFixed(1)}s (need ${config.video?.shorts_min_seconds ?? 50}s+)`);
+    // Soft floor only: reject true stubs. Winners on this channel were 27–42s;
+    // a 50s+ floor (2026-07-28) killed punchy Shorts. Default min is 20s.
+    if (kind === 'short' && totalNarrationSec < (config.video?.shorts_min_seconds ?? 20)) {
+      throw new Error(`Narration too short for a Short: ${totalNarrationSec.toFixed(1)}s (need ${config.video?.shorts_min_seconds ?? 20}s+)`);
     }
 
     const fullAudioPath = path.join(runDir, `${baseName}-audio.mp3`);
@@ -367,73 +369,81 @@ async function runFull() {
   let research = await researchTodaysTopic(today, { forceNicheId: NICHE_OVERRIDE });
   log(`Topic: ${research.topic} (score ${research.score}/10 -- ${research.reason})`);
 
-  const manifest = { date: dateStr, topic: research.topic, videos: [] };
-  let { longScripts, videos } = await attemptLongScripts(research);
-  manifest.videos.push(...videos);
+  const manifest = { date: dateStr, topic: research.topic, videos: [], strategy: 'shorts-first-india-pillars-2026-08-04' };
 
-  // Zero long scripts succeeding on this topic (both attempts failing the
-  // same "narration keeps repeating"/"too short" way) is strong evidence
-  // the topic itself lacks real substance, not that generation got
-  // unlucky twice on the same fact pool -- retrying script generation
-  // again on identical thin material is unlikely to help, but a fresh
-  // topic with its own facts is a genuinely different shot. Confirmed
-  // live as a recurring cause of entire days producing zero long videos
-  // (and therefore zero Shorts, which depend on a successful long script).
-  // (longScripts now only counts scripts that became a real finished
-  // video -- see attemptLongScripts' comment -- so this check is accurate
-  // for both a script that never got written and one that did but never
-  // finished.)
-  // Two backup attempts, not one: the depth-focused pillars (2026-07-28)
-  // pick specific, advanced, narrow topics on purpose (mechanistic
-  // interpretability, catastrophic forgetting, etc.) instead of generic
-  // 101-level ones -- confirmed live that these have a real, higher
-  // repetition-failure rate than a broad survey topic would, since a free-
-  // tier model has less redundant material to draw on for a narrow subject.
-  // A single backup wasn't enough margin against that; two keeps the "give
-  // up for the day" case rare without endlessly retrying.
-  const triedTitles = new Set([research.topic.toLowerCase()]);
-  for (let attempt = 1; longScripts.length === 0 && attempt <= 2; attempt++) {
-    log(`No long videos succeeded on "${research.topic}" -- trying backup topic ${attempt}/2 instead of giving up for the day`);
+  // ------------------------------------------------------------------
+  // SHORTS FIRST (2026-08-04 bold change)
+  // Shorts are the only realistic path to YPP for this channel. Shipping
+  // them AFTER a 60–90 min long render meant timeout/quota/long-fail days
+  // produced zero Shorts. Generate Shorts immediately from research;
+  // long-form is optional fuel for watch hours, never a gate.
+  // ------------------------------------------------------------------
+  if (!LONG_ONLY) {
+    const shortCount = SHORT_COUNT_OVERRIDE ?? config.video?.shorts_count_per_day ?? 5;
+    log(`Shorts-first: generating ${shortCount} Shorts from research (no long dependency)`);
     try {
-      const backupResearch = await researchTodaysTopic(today, { excludeTitles: triedTitles, forceNicheId: NICHE_OVERRIDE });
-      log(`Backup topic ${attempt}/2: ${backupResearch.topic} (score ${backupResearch.score}/10 -- ${backupResearch.reason})`);
-      triedTitles.add(backupResearch.topic.toLowerCase());
-      research = backupResearch;
-      manifest.topic = research.topic;
-      const retry = await attemptLongScripts(research);
-      longScripts = retry.longScripts;
-      manifest.videos.push(...retry.videos);
+      const shorts = await writeShortScripts(research, null, shortCount);
+      for (const short of shorts) {
+        const shortScript = {
+          title: short.title,
+          description: short.description,
+          tags: [...new Set([...(short.tags || []), ...(short.hashtags || []), 'Shorts', 'India'])].slice(0, 15),
+          hashtags: short.hashtags,
+          structure: 'story-led',
+          segments: [{ text: short.narration, visual_needs: short.visual_needs || [] }]
+        };
+        const entry = await produceVideo({ kind: 'short', videoScript: shortScript, research, aspect: 'vertical' });
+        manifest.videos.push(entry);
+      }
     } catch (err) {
-      log(`Backup topic ${attempt}/2 attempt failed: ${err.message}`);
-    }
-  }
-
-  if (!LONG_ONLY && longScripts.length > 0) {
-    const shortCount = SHORT_COUNT_OVERRIDE ?? config.video?.shorts_count_per_day ?? 4;
-    const perLong = Math.ceil(shortCount / longScripts.length);
-    let made = 0;
-    for (const longScript of longScripts) {
-      if (made >= shortCount) break;
-      const want = Math.min(perLong, shortCount - made);
+      log(`FAILED (standalone shorts batch): ${err.message}`);
+      // One backup topic for Shorts if the first topic is unusable
       try {
-        const shorts = await writeShortScripts(research, longScript, want);
+        const backup = await researchTodaysTopic(today, {
+          excludeTitles: new Set([research.topic.toLowerCase()]),
+          forceNicheId: NICHE_OVERRIDE
+        });
+        log(`Shorts backup topic: ${backup.topic} (score ${backup.score}/10)`);
+        research = backup;
+        manifest.topic = research.topic;
+        const shorts = await writeShortScripts(research, null, shortCount);
         for (const short of shorts) {
           const shortScript = {
             title: short.title,
             description: short.description,
-            tags: [...new Set([...(short.tags || []), ...(short.hashtags || []), ...(longScript.tags || []), 'Shorts'])].slice(0, 15),
+            tags: [...new Set([...(short.tags || []), ...(short.hashtags || []), 'Shorts', 'India'])].slice(0, 15),
             hashtags: short.hashtags,
-            structure: longScript.structure,
+            structure: 'story-led',
             segments: [{ text: short.narration, visual_needs: short.visual_needs || [] }]
           };
           const entry = await produceVideo({ kind: 'short', videoScript: shortScript, research, aspect: 'vertical' });
           manifest.videos.push(entry);
-          made++;
         }
-      } catch (err) {
-        log(`FAILED (shorts for "${longScript.title}"): ${err.message}`);
-        manifest.videos.push({ kind: 'short', error: err.message });
+      } catch (err2) {
+        log(`FAILED (shorts backup): ${err2.message}`);
+        manifest.videos.push({ kind: 'short', error: err2.message });
       }
+    }
+  }
+
+  // Long-form second: session time / YPP watch hours. Never blocks Shorts.
+  let { longScripts, videos } = await attemptLongScripts(research);
+  manifest.videos.push(...videos);
+
+  const triedTitles = new Set([research.topic.toLowerCase()]);
+  for (let attempt = 1; longScripts.length === 0 && attempt <= 1; attempt++) {
+    log(`No long video on "${research.topic}" -- one backup topic for long-form only`);
+    try {
+      const backupResearch = await researchTodaysTopic(today, { excludeTitles: triedTitles, forceNicheId: NICHE_OVERRIDE });
+      log(`Long backup topic: ${backupResearch.topic} (score ${backupResearch.score}/10 -- ${backupResearch.reason})`);
+      triedTitles.add(backupResearch.topic.toLowerCase());
+      // Keep manifest.topic as the Shorts topic (already shipped); only use
+      // backup for this long attempt.
+      const retry = await attemptLongScripts(backupResearch);
+      longScripts = retry.longScripts;
+      manifest.videos.push(...retry.videos);
+    } catch (err) {
+      log(`Long backup attempt failed: ${err.message}`);
     }
   }
 
