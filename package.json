@@ -9,7 +9,8 @@
     "dry-run": "node orchestrator.js --dry-run",
     "auth:youtube": "node scripts/get-youtube-refresh-token.js",
     "growth:report": "node scripts/channel-growth-report.mjs",
-    "growth:fix-channel": "node scripts/fix-channel-growth.mjs"
+    "growth:fix-channel": "node scripts/fix-channel-growth.mjs",
+    "growth:playlists": "node scripts/organize-playlists.mjs"
   },
   "engines": {
     "node": ">=20.0.0"

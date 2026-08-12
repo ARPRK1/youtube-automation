@@ -21,7 +21,7 @@ on:
         type: string
         default: ''
       niche:
-        description: 'Pin a pillar (indian-food-story recommended; india-history-twist, india-place-secret). Blank = food-heavy rotation. Money paused.'
+        description: 'Pin pillar: world-facts, top-lists, history-twist, science-curiosity, mind-quiz, indian-food-story. Blank = daily rotation.'
         type: string
         default: ''
 

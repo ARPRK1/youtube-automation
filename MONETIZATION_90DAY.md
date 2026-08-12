@@ -6,6 +6,18 @@
 
 ---
 
+## 0b. Universal curiosity pivot (same day, owner direction)
+
+Food alone is not infinite. Owner wants a **neutral global channel**: facts, Top 5/10, history, science curiosities, riddles/quiz — with **human-looking** visuals (no random faces), cloned voice, and script-matched frames. Implemented:
+
+- Pillars: world-facts, top-lists, history-twist, science-curiosity, mind-quiz (+ light food)
+- `media.never_people: true` + reuse real stock before AI thrash
+- Concrete `visual_needs` only (objects/places, never portraits)
+- Thumbnails: punchier, Top-N number stamp, FACT badge
+- Playlists: Food / Finance / Science&AI / History / Curiosity
+
+---
+
 ## 0. Post-pivot check-in (2026-08-12)
 
 | Signal | Result |

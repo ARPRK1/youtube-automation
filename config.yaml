@@ -1,41 +1,37 @@
-# ModernMonk 90-day monetization config.
-# Updated 2026-08-12 after post-pivot audit + owner feedback on voice quality.
+# ModernMonk — Universal curiosity Shorts (owner pivot 2026-08-12).
+# Brand: one sharp fact / top-5 / history twist / quiz a day.
+# Quality > speed: script-matched visuals, no random faces, clone voice on Shorts.
 
 video:
-  # Shorts-first growth. Long is optional session fuel — skip if clone TTS
-  # budget is tight (see voice.long_provider). 5 Shorts * 1600 = 8000 units.
   long_count_per_day: 0
   long_min_minutes: 6
   long_max_minutes: 12
   shorts_count_per_day: 5
-  # Post-pivot winners: 32–45s. Reject stubs (7s/13s still leaked Aug 5–8).
   shorts_min_seconds: 28
   shorts_max_seconds: 50
   whiteboard_reveal_enabled: true
 
 voice:
-  # OWNER REQUEST 2026-08-12: own cloned voice — edge neural was not
-  # watchable. Chatterbox zero-shot clone uses voice-sample/reference.wav.
-  # Shorts only: ~450 words/day * ~4s/word ≈ 30 min TTS (fits free runners).
-  # Long stays edge-tts if re-enabled (clone on long would alone need ~100 min).
   provider: chatterbox
   shorts_provider: chatterbox
   long_provider: edge-tts
   edge_tts_voice: en-IN-NeerjaNeural
   kokoro_voice: af_heart
   reference_sample: voice-sample/reference.wav
-  # Slightly more expressive than default 0.5 for faceless Shorts energy.
   chatterbox_exaggeration: 0.55
 
 topics:
   mode: growth-focused
   avoid_repeat_days: 28
   primary_niches:
+    - world-facts
+    - top-lists
+    - history-twist
+    - science-curiosity
+    - mind-quiz
     - indian-food-story
-    - india-history-twist
-    - india-place-secret
   sources:
-    google_trends_india: true
+    google_trends_india: false
     google_news: true
     youtube_trending: false
     reddit: false
@@ -43,7 +39,6 @@ topics:
 script:
   min_long_words: 1100
   target_long_words: 1500
-  # ~80–110 words ≈ 28–45s at ~150–170 wpm (cloned speech often slightly slower).
   min_short_words: 80
   max_short_words: 110
   words_per_minute: 160
@@ -56,12 +51,18 @@ media:
   allowed_licenses: [pd, cc0, by, by-sa]
   ai_fallback_enabled: true
   verify_relevance: true
-  # hybrid: real food photos when possible (vision quota can 429 — AI still ok).
+  # Prefer real stock for concrete objects/places; AI only for diagrams.
+  # never_people: hard ban on person-classified AI frames (random faces = slop).
   mode: hybrid
-  visual_beat_seconds_short: 3.0
-  visual_beat_seconds_long: 4.8
-  max_visual_beats_short: 14
-  max_visual_beats_long: 16
+  never_people: true
+  prefer_real_stock: true
+  # Human-made look: fewer AI style thrash cuts; longer holds on real photos.
+  visual_beat_seconds_short: 3.8
+  visual_beat_seconds_long: 5.0
+  max_visual_beats_short: 10
+  max_visual_beats_long: 14
+  # Reuse real stills with different Ken Burns before generating new AI faces.
+  prefer_reuse_real_over_ai: true
 
 music:
   enabled: true

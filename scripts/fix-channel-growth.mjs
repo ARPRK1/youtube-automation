@@ -11,20 +11,20 @@ const auth = new google.auth.OAuth2(
 auth.setCredentials({ refresh_token: process.env.YOUTUBE_REFRESH_TOKEN });
 const yt = google.youtube({ version: 'v3', auth });
 
-const CHANNEL_DESC = `ModernMonk — India stories that actually stick.
+const CHANNEL_DESC = `ModernMonk — one sharp fact you didn't know.
 
-Food origin secrets. Simple money habits. History with a twist. Hidden places.
-Every claim sourced. Zero fluff. Built for curious Indians (and anyone who loves India).
+World facts. Top 5s. History twists. Science curiosities. Riddles that make you pause.
+No fluff. No celebrity noise. Just shareable "wait, what?" Shorts.
 
-What you get:
-• Food origin Shorts that surprise you in under 45 seconds
-• Money lessons without guru nonsense
-• "One decision" history moments
-• Places locals know and tourists miss
+What you'll get:
+• A surprising fact or myth-bust in under 45 seconds
+• Top 5 / Top 10 countdowns on anything worth ranking
+• History moments that actually stick
+• Science and riddles that feel like a friend explaining — not a textbook
 
-Subscribe for one sharp India story a day — not noise.
+Subscribe if you want one curiosity a day that is worth the scroll.
 
-#India #Shorts #Food #Money #History`;
+#Shorts #Facts #DidYouKnow #History #Quiz`;
 
 console.log('=== 1) Channel made-for-kids + branding ===');
 const chList = await yt.channels.list({ part: ['snippet', 'status', 'brandingSettings'], mine: true });
