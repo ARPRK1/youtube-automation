@@ -448,24 +448,30 @@ async function runFull() {
   }
 
   // Long-form second: session time / YPP watch hours. Never blocks Shorts.
-  let { longScripts, videos } = await attemptLongScripts(research);
-  manifest.videos.push(...videos);
+  // When long_count_per_day is 0 (Shorts-only mode), skip entirely — including
+  // the "backup topic" path, which used to fire on empty longScripts and waste
+  // research/LLM time after a successful Shorts day (confirmed 2026-08-12).
+  const longWanted = LONG_COUNT_OVERRIDE ?? config.video?.long_count_per_day ?? 0;
+  if (longWanted > 0) {
+    let { longScripts, videos } = await attemptLongScripts(research);
+    manifest.videos.push(...videos);
 
-  const triedTitles = new Set([research.topic.toLowerCase()]);
-  for (let attempt = 1; longScripts.length === 0 && attempt <= 1; attempt++) {
-    log(`No long video on "${research.topic}" -- one backup topic for long-form only`);
-    try {
-      const backupResearch = await researchTodaysTopic(today, { excludeTitles: triedTitles, forceNicheId: NICHE_OVERRIDE });
-      log(`Long backup topic: ${backupResearch.topic} (score ${backupResearch.score}/10 -- ${backupResearch.reason})`);
-      triedTitles.add(backupResearch.topic.toLowerCase());
-      // Keep manifest.topic as the Shorts topic (already shipped); only use
-      // backup for this long attempt.
-      const retry = await attemptLongScripts(backupResearch);
-      longScripts = retry.longScripts;
-      manifest.videos.push(...retry.videos);
-    } catch (err) {
-      log(`Long backup attempt failed: ${err.message}`);
+    const triedTitles = new Set([research.topic.toLowerCase()]);
+    for (let attempt = 1; longScripts.length === 0 && attempt <= 1; attempt++) {
+      log(`No long video on "${research.topic}" -- one backup topic for long-form only`);
+      try {
+        const backupResearch = await researchTodaysTopic(today, { excludeTitles: triedTitles, forceNicheId: NICHE_OVERRIDE });
+        log(`Long backup topic: ${backupResearch.topic} (score ${backupResearch.score}/10 -- ${backupResearch.reason})`);
+        triedTitles.add(backupResearch.topic.toLowerCase());
+        const retry = await attemptLongScripts(backupResearch);
+        longScripts = retry.longScripts;
+        manifest.videos.push(...retry.videos);
+      } catch (err) {
+        log(`Long backup attempt failed: ${err.message}`);
+      }
     }
+  } else {
+    log('Long-form skipped (long_count_per_day=0) — Shorts-only mode');
   }
 
   await writeFile(path.join(runDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
