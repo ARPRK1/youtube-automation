@@ -21,7 +21,7 @@ on:
         type: string
         default: ''
       niche:
-        description: 'Pin a pillar for this run (indian-food-story, indian-money-simple, india-history-twist, india-place-secret). Blank = weighted rotation (food-heavy).'
+        description: 'Pin a pillar (indian-food-story recommended; india-history-twist, india-place-secret). Blank = food-heavy rotation. Money paused.'
         type: string
         default: ''
 
@@ -68,7 +68,9 @@ jobs:
     # minutes are free on a public repo, so that constraint is void; see
     # config.yaml's voice: block and Phase 5 of CLAUDE-CODE-BRIEF for the
     # current plan to re-evaluate Chatterbox.)
-    timeout-minutes: 160
+    # 2026-08-12: Chatterbox clone on Shorts adds ~30–50 min TTS after cold
+    # model load. Public repo = free minutes; 240 keeps margin for hybrid media.
+    timeout-minutes: 240
 
     steps:
       - uses: actions/checkout@v4
@@ -90,8 +92,20 @@ jobs:
             libgbm1 libasound2t64 libpango-1.0-0 libcairo2 \
             fonts-dejavu-core fonts-liberation
 
-      - name: Install edge-tts
+      - name: Install edge-tts (long-form / chatterbox fallback)
         run: pip install edge-tts
+
+      - name: Install Chatterbox voice clone (Shorts primary voice)
+        # Same recipe as chatterbox-test.yml (verified success 2026-07-24).
+        # CPU torch + chatterbox --no-deps (skip gradio UI). Model loads once
+        # per run via scripts/chatterbox_server.py.
+        run: |
+          pip install torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install librosa==0.11.0 s3tokenizer transformers==5.2.0 diffusers==0.29.0 \
+            conformer==0.3.2 safetensors==0.5.3 spacy-pkuseg pykakasi==2.3.0 pyloudnorm omegaconf
+          pip install "git+https://github.com/resemble-ai/Perth.git@master"
+          pip install chatterbox-tts --no-deps
+          test -f voice-sample/reference.wav && echo "Reference voice sample present ($(wc -c < voice-sample/reference.wav) bytes)" || (echo "MISSING voice-sample/reference.wav" && exit 1)
 
       - name: Install Node dependencies
         run: npm install
@@ -136,6 +150,7 @@ jobs:
             exit 1
           fi
         env:
+          PYTHON_BIN: python
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

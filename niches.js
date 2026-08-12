@@ -1,39 +1,9 @@
 // Day-of-week -> niche map. getDay(): 0=Sun ... 6=Sat.
-//
-// BOLD REVERT 2026-08-04: India food / money / history / places only.
-// Live audit proved food-origin Shorts are the only cluster that hit 1k+ views.
-// Abstract AI/physics/daily-hack pillars (2026-07-24 pivot) averaged <70 views.
-//
-// `searchQueries` feed Google News (hl=en-IN) for real current topics.
-// `fallbackTopics` compete in scoring every day so thin news days still ship.
-// `pillarId` must match PROVEN_GROWTH_NICHES ids in lib/growth.js.
+// 2026-08-12: food-first only (money paused after weak post-pivot avg ~42 views).
+// pillarId must match PROVEN_GROWTH_NICHES in lib/growth.js.
 
 export const NICHE_BY_WEEKDAY = {
   1: {
-    name: 'Simple Indian Money Habits',
-    pillarId: 'indian-money-simple',
-    audience: 'Indian retail investors and young professionals building wealth',
-    region: 'IN',
-    accentColor: '#2a9d8f',
-    searchQueries: [
-      'Indian stock market today',
-      'Nifty Sensex mutual funds India',
-      'RBI interest rate India EMI',
-      'India SIP personal finance',
-      'Indian IPO tax budget news'
-    ],
-    fallbackTopics: [
-      'The SIP mistake that quietly costs Indian investors lakhs over 10 years',
-      'What one RBI rate decision actually does to your home loan EMI',
-      'Index funds vs active funds in India — what the 10-year data actually shows',
-      'The hidden fee most mutual fund apps never explain clearly',
-      'Why your salary growth can still leave you poorer in real terms',
-      'How compound interest builds real wealth in Indian mutual funds',
-      'Common mistakes Indian beginner investors make with SIPs',
-      'The one number on an Indian payslip most people never check'
-    ]
-  },
-  2: {
     name: 'Indian Food Origin Stories',
     pillarId: 'indian-food-story',
     audience: 'Food-curious Indians and anyone who loves Indian cuisine stories',
@@ -43,18 +13,42 @@ export const NICHE_BY_WEEKDAY = {
       'Indian food origin history',
       'street food India story',
       'Indian spice trade history',
-      'regional Indian cuisine history',
-      'butter chicken biryani origin'
+      'dosa idli origin history',
+      'butter chicken history Delhi'
     ],
     fallbackTopics: [
       'Why butter chicken was invented in a Delhi restaurant, not a royal kitchen',
-      'The real origin of biryani and why every city claims it',
+      'Why dosa is a fermented science project, not just a breakfast crepe',
+      'How vada pav became Mumbai\'s working-class burger',
+      'The real story behind samosa traveling from Central Asia to every Indian street',
       'How black pepper from Kerala changed global trade routes forever',
-      'The colonial accident that created Indian Chinese cuisine',
       'Why chai is India\'s real national drink, not coffee or lassi',
-      'How one spice mix recipe traveled from royal kitchens to every packet today',
-      'The dish British soldiers loved that Indians reinvented after independence',
-      'The street food that became a national obsession in under 50 years'
+      'How pickle (achar) was India\'s original food preservation tech',
+      'The colonial accident that created Indian Chinese cuisine'
+    ]
+  },
+  2: {
+    name: 'Indian Food Origin Stories',
+    pillarId: 'indian-food-story',
+    audience: 'Food-curious Indians and anyone who loves Indian cuisine stories',
+    region: 'IN',
+    accentColor: '#f77f00',
+    searchQueries: [
+      'Indian street food history',
+      'regional Indian dish origin',
+      'spice India world history',
+      'Indian festival food tradition',
+      'paneer curry origin India'
+    ],
+    fallbackTopics: [
+      'How jalebi became festival gold from a simple batter accident',
+      'Why filter coffee culture in South India never needed a cafe chain',
+      'The railway snack that taught India how to eat on the move',
+      'Why paneer shows up in North Indian restaurants but not the same way in the South',
+      'The port that made Indian chili part of everyday cooking worldwide',
+      'How idli was engineered for travel and temple kitchens',
+      'Why mango pickle lasts months without a fridge — the real method',
+      'The street cart trick behind India\'s most ordered delivery kebab'
     ]
   },
   3: {
@@ -88,21 +82,21 @@ export const NICHE_BY_WEEKDAY = {
     region: 'IN',
     accentColor: '#f77f00',
     searchQueries: [
-      'Indian festival food tradition',
-      'regional Indian dish origin',
-      'Indian street food history',
-      'spice India world history',
-      'Indian cooking technique science'
+      'Indian cooking technique history',
+      'tandoor history India',
+      'masala origin story India',
+      'Indian Chinese food history',
+      'Gujarati Rajasthani food origin'
     ],
     fallbackTopics: [
+      'How one spice mix recipe traveled from royal kitchens to every packet today',
+      'The dish British soldiers loved that Indians reinvented after independence',
       'The science of why a classic Indian cooking technique actually works',
       'How a regional Indian cuisine developed its signature flavors',
       'An Indian festival and the food traditions behind it',
-      'Comfort food traditions across different Indian states',
-      'The story behind a beloved Indian national dish',
-      'Why mango pickle lasts months without a fridge — the real method',
       'How tandoor cooking traveled and changed restaurant menus worldwide',
-      'The forgotten grain India almost abandoned and is now rediscovering'
+      'The forgotten grain India almost abandoned and is now rediscovering',
+      'Why some Indian recipes were designed to survive long journeys'
     ]
   },
   5: {
@@ -130,27 +124,27 @@ export const NICHE_BY_WEEKDAY = {
     ]
   },
   6: {
-    name: 'Simple Indian Money Habits',
-    pillarId: 'indian-money-simple',
-    audience: 'Indian retail investors and young professionals building wealth',
+    name: 'Indian Food Origin Stories',
+    pillarId: 'indian-food-story',
+    audience: 'Food-curious Indians — weekend scroll audience',
     region: 'IN',
-    accentColor: '#2a9d8f',
+    accentColor: '#f77f00',
     searchQueries: [
-      'India personal finance tips',
-      'mutual fund SIP India explained',
-      'India inflation salary news',
-      'RBI policy impact middle class',
-      'Indian tax saving investment'
+      'India food trending this week',
+      'Indian cuisine news story',
+      'street food India viral',
+      'Indian recipe history story',
+      'chaat pani puri origin'
     ],
     fallbackTopics: [
-      'How to read an Indian company earnings report as a beginner',
-      'What a P/E ratio actually tells you about an Indian stock',
-      'FD vs debt funds in India when rates are changing',
-      'The real cost of credit card minimum payments in India',
-      'Why emergency funds matter more than the next hot IPO',
-      'How gold still fits (or does not) in a modern Indian portfolio',
-      'The difference between wealth creation and looking rich in India',
-      'What Indian millennials get wrong about home loans'
+      'Why pani puri is India\'s most democratic street food',
+      'How chaat turned leftover flavors into a national addiction',
+      'A regional Indian dish that went national without anyone noticing',
+      'How a single spice shaped both Indian kitchens and global wars',
+      'The restaurant trick behind India\'s most ordered delivery dish',
+      'A food tradition from one Indian state that confuses everyone else',
+      'The origin story of a snack sold at every Indian railway platform',
+      'Why South Indian filter coffee is a ritual, not a drink order'
     ]
   },
   0: {
@@ -160,19 +154,19 @@ export const NICHE_BY_WEEKDAY = {
     region: 'IN',
     accentColor: '#f77f00',
     searchQueries: [
-      'India food trending this week',
-      'Indian cuisine news story',
-      'street food India viral',
-      'Indian recipe history story'
+      'India food weekend story',
+      'Indian home cooking tradition',
+      'Sunday Indian thali history',
+      'Indian comfort food origin'
     ],
     fallbackTopics: [
-      'This week\'s most interesting Indian food story, explained simply',
-      'A regional Indian dish that went national without anyone noticing',
-      'How a single spice shaped both Indian kitchens and global wars',
-      'The restaurant trick behind India\'s most ordered delivery dish',
-      'Why some Indian recipes were designed to survive long journeys',
-      'A food tradition from one Indian state that confuses everyone else',
-      'The origin story of a snack sold at every Indian railway platform'
+      'What a real Indian thali was designed to do (not just look pretty)',
+      'Why every Indian state argues about the "correct" way to make dal',
+      'How comfort food in India is really a climate and crop story',
+      'The home kitchen technique restaurants quietly copy',
+      'Why ghee stayed sacred long after oil became cheaper',
+      'How leftover rice became a national breakfast strategy',
+      'The festival sweet that only appears once a year for a reason'
     ]
   }
 };
@@ -183,8 +177,6 @@ export function getTodayNiche(date = new Date()) {
   return niche;
 }
 
-/** Deterministic daily rotation through a niche's fallback topic bank or
- * search queries, so consecutive same-day runs don't repeat. */
 export function pickFallbackTopic(niche, date = new Date(), offset = 0) {
   const start = Date.UTC(date.getUTCFullYear(), 0, 0);
   const dayOfYear = Math.floor((date - start) / 86400000);

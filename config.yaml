@@ -1,58 +1,52 @@
 # ModernMonk 90-day monetization config.
-# Target: YouTube Partner Program (1k subs + 4k watch hours OR 10M Shorts views / 90d).
-#
-# BOLD STRATEGY 2026-08-04 (expert audit of live channel data):
-# - REVERT physics/AI/abstract pivot — those Shorts get 0–67 views
-# - DOUBLE DOWN on India food origins (only cluster with 1k+ views)
-# - Shorts-first, 25–45s (winner length), public, NOT made-for-kids
-# - Hybrid media (real food/place photos > pure whiteboard AI)
+# Updated 2026-08-12 after post-pivot audit + owner feedback on voice quality.
 
 video:
-  # 1 long + 5 Shorts = 9,600 quota units (safe under free 10k/day).
-  # Shorts are the growth engine; long is optional session-time fuel.
-  long_count_per_day: 1
+  # Shorts-first growth. Long is optional session fuel — skip if clone TTS
+  # budget is tight (see voice.long_provider). 5 Shorts * 1600 = 8000 units.
+  long_count_per_day: 0
   long_min_minutes: 6
   long_max_minutes: 12
   shorts_count_per_day: 5
-  # LIVE DATA: winning Shorts were 27–42s. The 50–100s floor (2026-07-28)
-  # produced longer abstract lectures that die on the shelf for a 16-sub
-  # channel. Floor is soft (reject only true stubs); ceiling is hard.
-  shorts_min_seconds: 20
-  shorts_max_seconds: 55
+  # Post-pivot winners: 32–45s. Reject stubs (7s/13s still leaked Aug 5–8).
+  shorts_min_seconds: 28
+  shorts_max_seconds: 50
   whiteboard_reveal_enabled: true
 
 voice:
-  # India-topic content converts better with en-IN neural voice.
-  provider: edge-tts
+  # OWNER REQUEST 2026-08-12: own cloned voice — edge neural was not
+  # watchable. Chatterbox zero-shot clone uses voice-sample/reference.wav.
+  # Shorts only: ~450 words/day * ~4s/word ≈ 30 min TTS (fits free runners).
+  # Long stays edge-tts if re-enabled (clone on long would alone need ~100 min).
+  provider: chatterbox
+  shorts_provider: chatterbox
+  long_provider: edge-tts
   edge_tts_voice: en-IN-NeerjaNeural
   kokoro_voice: af_heart
   reference_sample: voice-sample/reference.wav
-  chatterbox_exaggeration: 0.5
+  # Slightly more expressive than default 0.5 for faceless Shorts energy.
+  chatterbox_exaggeration: 0.55
 
 topics:
   mode: growth-focused
-  avoid_repeat_days: 21
+  avoid_repeat_days: 28
   primary_niches:
     - indian-food-story
-    - indian-money-simple
     - india-history-twist
     - india-place-secret
   sources:
-    # Re-enable India trends — we are an India story channel again.
     google_trends_india: true
     google_news: true
-    # YouTube trending is noisy (Marvel, sports scores). Off by default;
-    # curated banks + Google News already feed enough candidates.
     youtube_trending: false
     reddit: false
 
 script:
   min_long_words: 1100
   target_long_words: 1500
-  # ~70–120 words ≈ 25–45s at ~170 wpm real speech (en-IN neural).
-  min_short_words: 70
-  max_short_words: 120
-  words_per_minute: 170
+  # ~80–110 words ≈ 28–45s at ~150–170 wpm (cloned speech often slightly slower).
+  min_short_words: 80
+  max_short_words: 110
+  words_per_minute: 160
   structures: [story-led, question-led, countdown, mystery]
   growth_mode: true
 
@@ -62,12 +56,11 @@ media:
   allowed_licenses: [pd, cc0, by, by-sa]
   ai_fallback_enabled: true
   verify_relevance: true
-  # hybrid (default): real stock first for food/places, AI fallback.
-  # ai-only was correct for abstract physics; wrong for food origin stories.
+  # hybrid: real food photos when possible (vision quota can 429 — AI still ok).
   mode: hybrid
-  visual_beat_seconds_short: 3.2
+  visual_beat_seconds_short: 3.0
   visual_beat_seconds_long: 4.8
-  max_visual_beats_short: 12
+  max_visual_beats_short: 14
   max_visual_beats_long: 16
 
 music:
@@ -78,7 +71,6 @@ music:
 
 upload:
   enabled: true
-  # CRITICAL: unlisted = zero algorithm. Public is required for growth.
   privacy_status: public
   made_for_kids: false
   category_id_long: '27'

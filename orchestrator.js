@@ -54,12 +54,18 @@ function accentColorForTopic(topic) {
 }
 
 async function runDryRun() {
+  const { access } = await import('node:fs/promises');
+  const ref = config.voice?.reference_sample || 'voice-sample/reference.wav';
+  let hasRef = false;
+  try { await access(ref); hasRef = true; } catch { /* missing */ }
+  const shortsVoice = config.voice?.shorts_provider || config.voice?.provider || 'edge-tts';
   const checks = [
     ['GROQ_API_KEY or GEMINI_API_KEY (script generation, topic scoring)', Boolean(process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY)],
     ['GEMINI_API_KEY (vision relevance verification)', Boolean(process.env.GEMINI_API_KEY)],
     ['YOUTUBE_CLIENT_ID / SECRET / REFRESH_TOKEN (upload)', hasYoutubeCredentials()],
     ['PEXELS_API_KEY (optional, real b-roll)', Boolean(process.env.PEXELS_API_KEY)],
-    ['PIXABAY_API_KEY (optional, real b-roll)', Boolean(process.env.PIXABAY_API_KEY)]
+    ['PIXABAY_API_KEY (optional, real b-roll)', Boolean(process.env.PIXABAY_API_KEY)],
+    [`Voice clone reference (${ref}) for Shorts=${shortsVoice}`, shortsVoice !== 'chatterbox' || hasRef]
   ];
   let ok = true;
   for (const [label, present] of checks) {
@@ -123,7 +129,10 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
       // segment costs nothing and makes the next one of these diagnosable
       // instead of a 31-minute blank spot in the log.
       log(`[produce] "${videoScript.title}" segment ${i + 1}/${videoScript.segments.length}: synthesizing audio + sourcing media`);
-      const { audioPath, srtPath, durationSec, hadPause } = await synthesizeSegmentAudio(seg.text, runDir, `${baseName}-seg${i}`);
+      const { audioPath, srtPath, durationSec, hadPause, provider: ttsProvider } = await synthesizeSegmentAudio(
+        seg.text, runDir, `${baseName}-seg${i}`, { kind }
+      );
+      if (i === 0) entry.steps.ttsProvider = ttsProvider;
       audioPaths.push(audioPath);
       const capSrtPath = path.join(runDir, `${baseName}-seg${i}-cap.srt`);
       const lines = await buildSegmentCaptions({
@@ -369,7 +378,18 @@ async function runFull() {
   let research = await researchTodaysTopic(today, { forceNicheId: NICHE_OVERRIDE });
   log(`Topic: ${research.topic} (score ${research.score}/10 -- ${research.reason})`);
 
-  const manifest = { date: dateStr, topic: research.topic, videos: [], strategy: 'shorts-first-india-pillars-2026-08-04' };
+  const manifest = {
+    date: dateStr,
+    topic: research.topic,
+    videos: [],
+    strategy: 'shorts-first-food-cloned-voice-2026-08-12',
+    voice: {
+      shorts: config.voice?.shorts_provider || config.voice?.provider,
+      long: config.voice?.long_provider || config.voice?.provider,
+      reference: config.voice?.reference_sample
+    }
+  };
+  log(`Voice plan: Shorts=${manifest.voice.shorts}, long=${manifest.voice.long}, ref=${manifest.voice.reference || 'none'}`);
 
   // ------------------------------------------------------------------
   // SHORTS FIRST (2026-08-04 bold change)

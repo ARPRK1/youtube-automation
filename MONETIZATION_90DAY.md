@@ -1,12 +1,26 @@
 # ModernMonk — 90-Day Monetization Plan (Updated)
 
 **Channel:** [@modernmonkshot](https://youtube.com/@modernmonkshot) (`UCv8n_ykbynzj6-gwdwX6loA`)  
-**Audit date:** 2026-08-04  
+**Audit date:** 2026-08-04 (updated **2026-08-12** post-pivot)  
 **Goal:** YouTube Partner Program eligibility within 90 days.
 
 ---
 
-## 1. Current status report (live API, 2026-08-04)
+## 0. Post-pivot check-in (2026-08-12)
+
+| Signal | Result |
+|--------|--------|
+| Food-first pivot | **Working directionally** — best new Short `Biryani not Indian?` **789 views** |
+| Biryani cluster | 789 / 259 / 246 / 103 — proof the niche still converts |
+| Money days (Aug 8–9) | **Failed** — mostly single-digit / low double-digit views |
+| Duplicate titles | Re-uploaded “Lawsuit Over Dish”, “Tandoor Goes Global” — **fixed tighter dedupe** |
+| Subs | Still **16** — packaging/voice still not converting to follows |
+| Owner feedback | Edge-TTS voice unwatchable → **Chatterbox clone on all Shorts** |
+| Long-form | Paused (`long_count_per_day: 0`) while clone TTS budget goes to Shorts |
+
+---
+
+## 1. Current status report (live API, 2026-08-04 baseline; refresh via `npm run growth:report`)
 
 | Metric | Value | Notes |
 |--------|-------|--------|
