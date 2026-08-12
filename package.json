@@ -10,7 +10,8 @@
     "auth:youtube": "node scripts/get-youtube-refresh-token.js",
     "growth:report": "node scripts/channel-growth-report.mjs",
     "growth:fix-channel": "node scripts/fix-channel-growth.mjs",
-    "growth:playlists": "node scripts/organize-playlists.mjs"
+    "growth:playlists": "node scripts/organize-playlists.mjs",
+    "growth:unlist-slop": "node scripts/unlist-slop.mjs"
   },
   "engines": {
     "node": ">=20.0.0"
