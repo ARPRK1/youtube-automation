@@ -129,8 +129,9 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
       // segment costs nothing and makes the next one of these diagnosable
       // instead of a 31-minute blank spot in the log.
       log(`[produce] "${videoScript.title}" segment ${i + 1}/${videoScript.segments.length}: synthesizing audio + sourcing media`);
+      const isLastSegment = i === videoScript.segments.length - 1;
       const { audioPath, srtPath, durationSec, hadPause, provider: ttsProvider } = await synthesizeSegmentAudio(
-        seg.text, runDir, `${baseName}-seg${i}`, { kind }
+        seg.text, runDir, `${baseName}-seg${i}`, { kind, isLastSegment }
       );
       if (i === 0) entry.steps.ttsProvider = ttsProvider;
       audioPaths.push(audioPath);

@@ -7,8 +7,9 @@ video:
   long_min_minutes: 6
   long_max_minutes: 12
   shorts_count_per_day: 5
+  # Includes ~2s end hold + sentence pauses (spoken body still ~28–45s).
   shorts_min_seconds: 28
-  shorts_max_seconds: 50
+  shorts_max_seconds: 58
   whiteboard_reveal_enabled: true
 
 voice:
@@ -18,7 +19,19 @@ voice:
   edge_tts_voice: en-IN-NeerjaNeural
   kokoro_voice: af_heart
   reference_sample: voice-sample/reference.wav
-  chatterbox_exaggeration: 0.55
+  # Prosody (ResembleAI): higher exaggeration = ups/downs; lower cfg = slower/deliberate.
+  # Owner feedback 2026-08-12: was flat + fast "reading text" — fix pairing below.
+  chatterbox_exaggeration: 0.75
+  chatterbox_cfg_weight: 0.28
+  chatterbox_temperature: 0.85
+  # Extra slowdown after synth (atempo, pitch preserved). 0.88 ≈ 12% slower.
+  speech_rate: 0.88
+  # Pause between sentences so each thought lands (ms).
+  sentence_pause_ms: 380
+  # Hold after last word before cut (seconds). Owner asked for ~2s.
+  end_silence_sec: 2.0
+  # Split Shorts narration into sentences for separate prosody curves.
+  sentence_split: true
 
 topics:
   mode: growth-focused
@@ -39,9 +52,11 @@ topics:
 script:
   min_long_words: 1100
   target_long_words: 1500
-  min_short_words: 80
-  max_short_words: 110
-  words_per_minute: 160
+  # Fewer words: slower clone + pauses + 2s end hold still fit under 50s.
+  # ~70–95 words at ~140 wpm spoken + pauses ≈ 32–45s + 2s hold.
+  min_short_words: 70
+  max_short_words: 95
+  words_per_minute: 140
   structures: [story-led, question-led, countdown, mystery]
   growth_mode: true
 
