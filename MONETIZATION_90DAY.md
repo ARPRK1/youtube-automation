@@ -1,8 +1,43 @@
 # ModernMonk — 90-Day Monetization Plan (Updated)
 
 **Channel:** [@modernmonkshot](https://youtube.com/@modernmonkshot) (`UCv8n_ykbynzj6-gwdwX6loA`)  
-**Audit date:** 2026-08-04 (updated **2026-08-12** post-pivot)  
+**Audit date:** 2026-08-04 · pivots 2026-08-12 · **current state 2026-08-13**  
 **Goal:** YouTube Partner Program eligibility within 90 days.
+
+---
+
+## ⭐ CURRENT STRATEGY (2026-08-13) — this section supersedes anything below it
+
+The channel is a **global universal-curiosity Shorts channel** with the owner's
+**cloned voice**. Sections 3–7 below are **historical record** from the
+2026-08-04 India-food revert and are kept only to explain how we got here — they
+do **not** describe the current config. Where they conflict, this section wins.
+
+**What is actually true now:**
+
+| Dimension | Current reality |
+|---|---|
+| Identity | Global "one sharp fact you didn't know" — world facts, Top 5/10, history twist, science curiosity, riddles (food = occasional spice) |
+| Audience/region | **Global English** (`topics.region: US`, not India) — no forced `India` tag |
+| Voice | **Chatterbox clone** on Shorts with per-beat performance (hook/reveal/cta pacing), loudnorm, end-hold — *not* edge-tts |
+| Visuals | **Real stock first, AI fallback**, every anchor vision-verified; `never_people` on both real and AI — *not* "AI images are primary" |
+| Format | Shorts-only (`long_count_per_day: 0`); ~28–50s spoken + ~2s hold |
+| Privacy / kids | **Public**, **not made for kids** |
+| Quality gate | Blocks black/frozen frames, banned phrases, and **majority visual-mismatch** |
+
+**The bottleneck is packaging quality (does the voice sound human, do the
+visuals match the words), not more uploads.** ~16 subs on 130+ videos = reach
+without retention. Everything in `QUALITY.md` targets that.
+
+**Near-term levers still worth doing (owner decisions):**
+1. On-screen **hook text** in the first frames of each Short (biggest untested retention lever).
+2. Turn any Short that clears ~500 views into a same-angle sequel/series.
+3. Weekly `npm run growth:report`; kill any drift off the curiosity pillars.
+4. Do **not** buy subs/views; apply to YPP the day thresholds clear.
+
+---
+
+### Historical record (pre-2026-08-13 — superseded above)
 
 ---
 
