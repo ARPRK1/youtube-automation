@@ -110,6 +110,15 @@ jobs:
       - name: Install Node dependencies
         run: npm install
 
+      - name: Build curated clean voice reference (better clone prompt)
+        # Extracts a clean 8–15s continuous slice of voice-sample/reference.wav
+        # to voice-sample/reference-clean.wav, which lib/tts.js auto-prefers.
+        # A short clean take clones the owner's STYLE far better than the raw
+        # ~57s clip. Non-fatal: TTS falls back to the raw reference if this
+        # can't produce a clip, so a bad trim never breaks the run.
+        continue-on-error: true
+        run: node scripts/prepare-reference-voice.mjs
+
       - name: Install Chromium dependencies for Remotion
         run: npx remotion browser ensure
 

@@ -11,6 +11,10 @@ video:
   shorts_min_seconds: 28
   shorts_max_seconds: 58
   whiteboard_reveal_enabled: true
+  # Big bold on-screen hook card for the first N seconds of a Short (the
+  # scroll-stopper). Uses the curiosity title. Self-falls-back if it can't render.
+  hook_overlay_enabled: true
+  hook_overlay_seconds: 2.6
 
 voice:
   provider: chatterbox
@@ -19,23 +23,38 @@ voice:
   edge_tts_voice: en-IN-NeerjaNeural
   kokoro_voice: af_heart
   reference_sample: voice-sample/reference.wav
+  # Curated clean 8–15s slice of the owner's voice, auto-preferred when present.
+  # Build it with: npm run voice:prepare-reference  (writes this file).
+  # A short clean take clones STYLE far better than the raw 57s clip.
+  reference_clean_sample: voice-sample/reference-clean.wav
   # Prosody (ResembleAI): higher exaggeration = ups/downs; lower cfg = slower/deliberate.
-  # Owner feedback 2026-08-12: was flat + fast "reading text" — fix pairing below.
-  chatterbox_exaggeration: 0.75
-  chatterbox_cfg_weight: 0.28
+  # These are the BASE values; the beat planner (lib/speech-performance.js)
+  # nudges each beat around them (hook = punchier, reveal = more lift + pause,
+  # cta = calmer). Owner feedback 2026-08-12: was flat + fast "reading text".
+  chatterbox_exaggeration: 0.72
+  chatterbox_cfg_weight: 0.30
   chatterbox_temperature: 0.85
-  # Extra slowdown after synth (atempo, pitch preserved). 0.88 ≈ 12% slower.
-  speech_rate: 0.88
-  # Pause between sentences so each thought lands (ms).
-  sentence_pause_ms: 380
+  # Extra slowdown after synth (atempo, pitch preserved). 0.90 ≈ 10% slower.
+  speech_rate: 0.90
+  # Base pause between sentences (ms). Overridden per beat by the planner.
+  sentence_pause_ms: 360
   # Hold after last word before cut (seconds). Owner asked for ~2s.
   end_silence_sec: 2.0
   # Split Shorts narration into sentences for separate prosody curves.
   sentence_split: true
+  # Performance beats: per-beat hook/reveal/cta/breath prosody + variable
+  # pauses (the P0 structural fix, not just config tuning). Shorts only.
+  beat_performance_enabled: true
+  # EBU R128 loudness normalization so every Short sits at a steady, present
+  # level (Chatterbox output level drifts with exaggeration/reference).
+  loudnorm_enabled: true
 
 topics:
   mode: growth-focused
   avoid_repeat_days: 28
+  # Locale for Google News fact corroboration + YouTube trending. Global
+  # curiosity channel → US (broadest English feed). Was IN (India) pre-pivot.
+  region: US
   primary_niches:
     - world-facts
     - top-lists
@@ -66,8 +85,13 @@ media:
   allowed_licenses: [pd, cc0, by, by-sa]
   ai_fallback_enabled: true
   verify_relevance: true
+  # Also vision-check the ANCHOR AI image of each segment (not just real
+  # stock). Closes the old "AI is relevant by construction" gap that let
+  # mismatched/random-people AI frames ship unchecked.
+  verify_ai_primary: true
   # Prefer real stock for concrete objects/places; AI only for diagrams.
-  # never_people: hard ban on person-classified AI frames (random faces = slop).
+  # never_people: hard ban on prominent human faces — enforced on BOTH AI
+  # generation AND real stock (vision hasPerson). Random faces = slop.
   mode: hybrid
   never_people: true
   prefer_real_stock: true

@@ -1,120 +1,163 @@
-# youtube-automation
+# youtube-automation — ModernMonk
 
-A small, free, token-free daily pipeline: writes a script (Groq/Gemini free tier), narrates it (Microsoft Edge TTS, free, no key), renders it with FFmpeg (background + burned-in captions), and uploads to YouTube (real Data API v3 upload, not a stub). Scheduled by GitHub Actions, not by OpenClaw's own cron — this never spends Claude/Fable tokens.
+A free, token-free daily pipeline that writes, voices, illustrates, and uploads
+YouTube **Shorts** — end to end, on a schedule, without spending any
+Claude/Fable tokens. It writes a script (Groq/Gemini free tier), narrates it in
+the **owner's cloned voice** (Chatterbox, free), builds **script-matched**
+visuals (real stock first, AI only when needed — every anchor image
+vision-verified), and uploads via the real YouTube Data API v3.
 
-Daily output (90-day growth mode): **5 Shorts first (25–45s) + 1 long-form (6–12 min)** — Shorts never wait on long-form. Free API quota: ~9,600 units/day of 10,000.
+**Channel:** [@modernmonkshot](https://youtube.com/@modernmonkshot) — a
+**global "one sharp fact you didn't know" curiosity channel**. Faceless,
+Shorts-first, no random human faces. See `MONETIZATION_90DAY.md` for the live
+growth plan and `QUALITY.md` for the voice/visual quality playbook.
 
-**Channel:** [@modernmonkshot](https://youtube.com/@modernmonkshot) — India stories only (food origins dominate; that is the only cluster that hit 1k+ views). See `MONETIZATION_90DAY.md` for the live audit and plan.
+Content pillars (weighted rotation — `lib/growth.js` + `niches.js`): world
+facts · Top 5/10 · history with a twist · science curiosities · riddles/quizzes
+(food origin stories as occasional spice — the one cluster that historically hit
+1k+ views).
 
-Weighted pillars (not random thrash) — see `lib/growth.js` + `niches.js`:
+> **Not the old setup.** This channel was previously India-food / then
+> AI-physics; both were abandoned. If you find a doc or comment implying "India
+> only" or "AI images are the primary visual," it's stale — the code is the
+> source of truth.
 
-| Pillar | Weight | Why |
-|---|---|---|
-| Indian food origin stories | 4 | Proven 1k+ view Shorts |
-| Simple Indian money habits | 2 | Evergreen IN demand |
-| India history with a twist | 2 | Mid-pack winners |
-| Hidden India places | 1 | Visual Shorts fuel |
+## What one daily run produces
 
-### How today's topic is chosen
+- **Mode:** Shorts-only by default (`video.long_count_per_day: 0`). Long-form is
+  optional watch-hours fuel and **never gates Shorts** — a failed long can't
+  zero out the day.
+- **Volume:** `video.shorts_count_per_day` (default 5), vertical 9:16, ~28–50s
+  spoken + a ~2s clean end-hold.
+- **Cost:** $0 recurring. YouTube free quota ~10k units/day; an upload is
+  ~1,600 units → ~5–6 uploads/day max.
 
-Each run calls `lib/trends.js`, which pulls a **real, current topic** for the day's niche — free, no API key, no LLM tokens spent:
+## How a Short is built (per video)
 
-- Mon–Sat: searches Google News (`hl=en-IN&gl=IN`) using that niche's rotating query set (e.g. "Nifty Sensex news", "Bollywood news today") and takes today's top real headline as the topic, with the next few headlines passed to the script writer as factual grounding.
-- Sunday: pulls Google's live "Trending Now" feed for India directly — whatever India is actually searching for right now becomes the topic.
-- If either live lookup fails (network blip, feed down), it falls back to a curated per-niche topic bank in `niches.js` so a bad day for Google's RSS feeds can never block the job. `output/<date>/manifest.json` records which source (`google-news` / `google-trends` / `fallback-bank`) was actually used for each video.
+1. **Research** (`lib/research.js`) — picks the day's topic from the weighted
+   curiosity pillars + a curated evergreen bank, scored by a free LLM for Shorts
+   potential, de-duplicated against recent history, with real source URLs pulled
+   from Google News for factual grounding. Region-neutral (`topics.region`,
+   default `US`) for a global audience.
+2. **Script** (`lib/script-writer.js`) — a free LLM writes speech-first
+   narration (hook → payoff → clean close) and concrete `visual_needs`. Vague/
+   mood/person visual needs are stripped and backfilled with real proper nouns
+   (`sanitizeVisualNeeds`).
+3. **Voice** (`lib/tts.js` + `lib/speech-performance.js`) — the narration is
+   split into **performance beats** (hook / fact / reveal / cta / breath), each
+   synthesized by **Chatterbox** in the owner's cloned voice at its own
+   emphasis/pacing, with variable pauses, EBU-R128 loudness normalization, and a
+   real end-hold. Captions are timed to the actual per-beat audio.
+4. **Visuals** (`lib/media-sourcing.js` + `lib/visual-sources.js` +
+   `lib/ai-image.js`) — for each beat, **real stock/Wikimedia/Pexels is tried
+   first** for concrete nouns; AI (Pollinations/Flux) is the fallback for
+   abstract diagrams. Every candidate is **vision-verified** for relevance,
+   watermarks, and — under `media.never_people` — prominent human faces (real
+   *and* AI). The last image holds through the end-silence.
+5. **Assemble** (`lib/visuals.js` + `lib/assemble.js`) — Ken Burns + xfade
+   timeline, muxed with narration and burned-in captions.
+6. **Thumbnail + Quality gate** (`lib/thumbnail.js` + `lib/quality-gate.js`) —
+   CTR thumbnail; the gate blocks black/frozen frames, banned AI-cliché phrases,
+   missing metadata, and **majority visual-mismatch** (anchor images that failed
+   vision-relevance). Failures route to `ready_to_upload/` for manual review
+   instead of publishing.
+7. **Upload** (`lib/youtube-upload.js`) — real Data API v3 upload, locked to the
+   ModernMonk channel (refuses to publish to any other channel the OAuth token
+   might be bound to), **public**, **not made for kids**, `#Shorts` enforced.
 
-Every video's description gets 3-6 relevant hashtags generated alongside the title/tags (Shorts always forcibly include `#Shorts`, since that's what routes an upload into the Shorts shelf — not left to the model).
+`runs/<date>/manifest.json` records every stage's outcome and the real video
+URL. Don't trust a video as "done" without checking it.
 
-### Visuals
+## Quality & QA loops (no full render needed)
 
-Each long-form video is built from several contextual visual segments — one per script chapter, not a single static background for the whole video. `lib/visuals.js` tries, in order, per segment:
+```bash
+npm run voice:prepare-reference   # build a clean 8–15s clone reference clip
+npm run voice:smoke               # hear 2–3 sample lines in ~1 min
+npm run preview:shotlist -- --niche world-facts --count 2   # per-beat visual plan
+npm run test:units                # pure-function unit tests
+npm run dry-run                   # validate keys/config, generate/upload nothing
+```
 
-1. **AI-generated image** (`lib/ai-image.js`, via Pollinations.ai — free, no key, runs on their servers so no GPU needed here). This is the primary source: the chapter title becomes the image prompt directly, so relevance is guaranteed by construction instead of hoping a search engine finds something close. This replaced an earlier stock-photo-search-only approach that repeatedly returned wrong/irrelevant or even inappropriate images (e.g. a cricket-recap video once got a funeral-ghat photo just from loose keyword overlap).
-2. **Stock photo/video fallback** (`lib/visual-sources.js`) only if AI generation is unavailable/slow/erroring — Pollinations is a free community service with no uptime guarantee. Falls through Pexels video → Pexels photo (needs a free `PEXELS_API_KEY`) → Openverse → Wikimedia Commons (both no-key, filtered to commercially-safe licenses, with the same title-relevance check).
-3. A generated gradient, if nothing worked anywhere — a segment can never fail outright.
-
-CC-licensed stock assets that *are* used (fallback path only) get credited automatically in the description, since most of those licenses require attribution. AI images and Pexels need none.
-
-**Optional but recommended:** add a free `PEXELS_API_KEY` (https://www.pexels.com/api/) purely as a stronger fallback layer if Pollinations has a bad day — not required for normal operation anymore.
-
-### Animated intro (Remotion)
-
-Each long-form video gets a short (~2.8s) animated title card before the narration starts — niche label and title, kinetic-text entrance, niche-specific accent color (see `accentColor` per niche in `niches.js`) — built with [Remotion](https://remotion.dev) (`remotion/IntroCard.jsx`, rendered via `lib/intro.js`). Remotion is free for individual/small-team use, runs on plain Node + headless Chromium (CPU only, no GPU needed) — but its renderer has **no Windows-on-ARM build**, so it cannot be tested on that class of machine; it's expected to work normally on GitHub Actions' standard Linux runners. If the intro render or splice fails for any reason, that single video falls back to shipping without the intro rather than failing the whole video — check `steps.intro` in `manifest.json` to see whether it actually rendered. Shorts skip the intro entirely (a title card would eat into the 59s budget and works against a Short's "hook in the first 2 seconds" goal).
+See **`QUALITY.md`** for the 60-second QA checklist, the knobs, and how to
+re-record the voice reference.
 
 ## One-time setup (all free)
 
-### 1. Script generation — Groq and/or Gemini API key
+### 1. LLM keys — Groq and/or Gemini
 
-Both have generous free tiers and don't touch your Claude/Fable usage at all.
+- Groq: https://console.groq.com/keys (primary; add `GROQ_API_KEY_2` etc. for
+  more free quota — the pipeline round-robins across them)
+- Gemini: https://aistudio.google.com/apikey (fallback)
 
-- Groq: https://console.groq.com/keys
-- Gemini: https://aistudio.google.com/apikey
+At least one is required. Vision (relevance + never-people) needs Groq or
+Gemini too — **keep at least one key set**, or those safety checks degrade open.
 
-You already have both configured in `~/.openclaw/.env` — reuse the same values here.
+### 2. YouTube upload — Google Cloud OAuth client
 
-### 2. YouTube upload — Google Cloud OAuth client (one-time, free)
-
-1. Go to https://console.cloud.google.com/ and create a new project (free).
-2. Enable **YouTube Data API v3** (APIs & Services → Library).
-3. Configure the OAuth consent screen (External, add yourself as a test user is enough — you don't need Google review for personal use).
-4. Create credentials → OAuth client ID → Application type **Desktop app**. Note the Client ID and Client Secret.
-5. Run the one-time helper locally to mint a refresh token:
-   ```
+1. https://console.cloud.google.com/ → new project (free).
+2. Enable **YouTube Data API v3**.
+3. Configure the OAuth consent screen (External; add yourself as a test user).
+4. Create credentials → OAuth client ID → **Desktop app**. Note the ID/secret.
+5. Mint a refresh token (pick the **ModernMonk Brand Account** on the consent
+   screen — the upload code hard-fails on the wrong channel):
+   ```bash
    YOUTUBE_CLIENT_ID=... YOUTUBE_CLIENT_SECRET=... node scripts/get-youtube-refresh-token.js
    ```
-   It prints a URL — open it, approve access with the Google account that owns your YouTube channel, and the refresh token prints in your terminal. Save it.
 
-### 3. Optional — Pexels API key for stock-photo backgrounds
+### 3. Optional — stock media keys
 
-Free, no cost ever: https://www.pexels.com/api/. Without this, videos use a generated gradient background instead of a stock photo — still looks fine, just plainer.
+- `PEXELS_API_KEY` (https://www.pexels.com/api/) — real photo/video b-roll.
+- `PIXABAY_API_KEY` (https://pixabay.com/api/docs/) — more b-roll.
 
-### 4. Push this repo to GitHub and add secrets
+Without them, real-media sourcing leans on Wikimedia/Openverse + AI fallback.
 
-Create a new (can be private) GitHub repo, push this folder to it, then under **Settings → Secrets and variables → Actions** add:
+### 4. GitHub Actions secrets
 
-- `GROQ_API_KEY` and/or `GEMINI_API_KEY`
-- `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, `YOUTUBE_REFRESH_TOKEN`
-- `PEXELS_API_KEY` (optional)
+Push to GitHub, then **Settings → Secrets and variables → Actions**:
 
-The workflow in `.github/workflows/daily.yml` runs daily at 12:30 UTC (~6:00pm IST) and can also be triggered manually from the Actions tab (`workflow_dispatch`). Pin a pillar with the `niche` input, e.g. `indian-food-story`.
+- `GROQ_API_KEY` (+ `GROQ_API_KEY_2`, …), `GEMINI_API_KEY`
+- `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, `YOUTUBE_REFRESH_TOKEN`,
+  `YOUTUBE_CHANNEL_ID`
+- `PEXELS_API_KEY`, `PIXABAY_API_KEY` (optional)
 
-Growth tools (free):
+`.github/workflows/daily.yml` runs daily at 12:30 UTC and can be triggered
+manually (`workflow_dispatch`), with inputs to pin a pillar (`niche`), change
+counts, or run long-only backfill. It installs Chatterbox on the runner and
+builds the clean voice reference automatically.
 
-```
-npm run growth:report        # live YPP progress dashboard
-npm run growth:fix-channel  # not-kids + branding keywords
-```
+## Local testing
 
-## Local testing (do this before enabling the schedule)
-
-```
+```bash
 npm install
-cp .env.example .env   # fill in the keys above
-npm run dry-run         # validates config, generates and uploads nothing, costs nothing
-npm start                # generates and uploads today's full batch for real
+cp .env.example .env    # fill in the keys
+npm run dry-run          # validates config; generates/uploads nothing
+npm start                # generates + uploads today's batch for real
 ```
 
-Check `output/<date>/manifest.json` after a real run — every video has a `steps` object recording exactly which stage succeeded, and an `upload` object with the real YouTube video ID/URL (or a `skipped`/error reason). Don't trust a video as "done" without checking this file; the old pipeline used to claim success without checking real output.
-
-Videos upload as **unlisted** by default (`YOUTUBE_PRIVACY_STATUS=unlisted`). Once you've confirmed a batch looks right on your channel, switch it to `public` in `.env` / the repo variable.
+Uploads default to **public** (`upload.privacy_status`, overridable with
+`YOUTUBE_PRIVACY_STATUS`). Public is required for the algorithm / YPP watch
+hours — do not default to unlisted.
 
 ## Architecture
 
 ```
-niches.js              day-of-week -> niche + topic bank + accent color
-lib/trends.js            Google News/Trends -> today's real topic per niche (free, no key)
-lib/script-writer.js   Groq/Gemini -> narration + title/description/tags (never Claude)
-lib/tts.js              edge-tts -> mp3 + word-timed .srt (free, no key)
-lib/srt.js              SRT parsing helpers
-lib/ai-image.js          Pollinations.ai -> AI image per chapter (free, no key, no GPU needed)
-lib/visual-sources.js    Pexels/Openverse/Wikimedia fallback if AI image generation fails
-lib/visuals.js           builds the per-chapter background clip (AI image -> stock -> gradient)
-remotion/                animated title-card intro (React/Remotion components)
-lib/intro.js             bundles + renders the Remotion intro
-lib/assemble.js          mux narration + background + captions, prepend intro -> final mp4
-lib/thumbnail.js         ffmpeg-generated thumbnail, no external service
-lib/youtube-upload.js    real YouTube Data API v3 upload (googleapis, OAuth refresh token)
-orchestrator.js          ties it together, writes output/<date>/manifest.json
+niches.js                weekday → pillar + evergreen topic bank + accent color
+lib/research.js          pillars + Google News grounding → today's scored topic
+lib/llm.js               free-tier LLM (Groq → Gemini), text + vision, key rotation
+lib/script-writer.js     narration + concrete visual_needs + metadata (never Claude)
+lib/speech-performance.js narration → hook/reveal/cta/breath performance beats
+lib/tts.js               Chatterbox clone per beat + loudnorm + end-hold + real captions
+lib/chatterbox-tts.js    persistent Python model server client
+lib/media-sourcing.js    real stock → AI fallback, vision-verified, shot-list geometry
+lib/visual-sources.js    Pexels/Pixabay/Openverse/Wikimedia (licensed)
+lib/ai-image.js          Pollinations/Flux prompts (never people)
+lib/vision-check.js      Groq/Gemini vision: relevance + watermark + person
+lib/visuals.js           Ken Burns + xfade background timeline
+lib/assemble.js          mux narration + burned-in captions
+lib/thumbnail.js         ffmpeg CTR thumbnail
+lib/quality-gate.js      pre-upload blocking checks (incl. vision-majority)
+lib/youtube-upload.js    Data API v3 upload, channel lock
+orchestrator.js          ties it together → runs/<date>/manifest.json
 ```
 
-No step in this pipeline calls Claude, Fable, or any paid API. The only recurring cost is your time.
+No step calls Claude, Fable, or any paid API. The only recurring cost is time.

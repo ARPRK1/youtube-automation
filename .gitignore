@@ -4,3 +4,8 @@ output/
 runs/
 ready_to_upload/
 *.log
+# QA scratch output (regenerated on demand)
+voice-smoke/
+# Derived from voice-sample/reference.wav; built fresh on the runner
+# (see .github/workflows/daily.yml) and locally via npm run voice:prepare-reference.
+voice-sample/reference-clean.wav

@@ -7,6 +7,10 @@
   "scripts": {
     "start": "node orchestrator.js",
     "dry-run": "node orchestrator.js --dry-run",
+    "voice:prepare-reference": "node scripts/prepare-reference-voice.mjs",
+    "voice:smoke": "node scripts/voice-smoke.mjs",
+    "preview:shotlist": "node scripts/shotlist-preview.mjs",
+    "test:units": "node --test \"test/*.test.mjs\"",
     "auth:youtube": "node scripts/get-youtube-refresh-token.js",
     "growth:report": "node scripts/channel-growth-report.mjs",
     "growth:fix-channel": "node scripts/fix-channel-growth.mjs",

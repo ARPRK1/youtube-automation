@@ -1,0 +1,32 @@
+name: Unit tests
+
+# Fast, dependency-light guard on the pure-function logic (beat planner,
+# visual-needs sanitizer, shot-list geometry, caption timing). Runs on every
+# push/PR so a regression in the quality-critical helpers is caught before it
+# ever reaches a daily production run. No API keys, no ffmpeg, no network.
+
+on:
+  push:
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'package.json'
+      - '.github/workflows/test.yml'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  units:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # The unit tests import only pure ESM modules (no native deps), so a full
+      # `npm install` isn't needed — but run it if a lockfile is present so any
+      # future test that does need a dep still works.
+      - name: Install dependencies
+        run: npm ci || npm install
+      - name: Run unit tests
+        run: npm run test:units
