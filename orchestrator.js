@@ -130,7 +130,7 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
       // instead of a 31-minute blank spot in the log.
       log(`[produce] "${videoScript.title}" segment ${i + 1}/${videoScript.segments.length}: synthesizing audio + sourcing media`);
       const isLastSegment = i === videoScript.segments.length - 1;
-      const { audioPath, srtPath, durationSec, hadPause, provider: ttsProvider } = await synthesizeSegmentAudio(
+      const { audioPath, srtPath, durationSec, hadPause, provider: ttsProvider, endHoldSec } = await synthesizeSegmentAudio(
         seg.text, runDir, `${baseName}-seg${i}`, { kind, isLastSegment }
       );
       if (i === 0) entry.steps.ttsProvider = ttsProvider;
@@ -154,7 +154,8 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
         aspect,
         durationSec,
         seed: `${baseName}-${i}`,
-        segmentIndex: i
+        segmentIndex: i,
+        endHoldSec: endHoldSec || 0
       });
       mediaAssets.push(...beats.map((b) => ({ ...b, hadPause })));
     }
@@ -196,7 +197,16 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
 
     const [w, h] = aspect === 'vertical' ? [1080, 1920] : [1920, 1080];
     let finalPath = path.join(runDir, `${baseName}.mp4`);
-    await renderFinalVideo({ backgroundClipPath: bgPath, audioPath: fullAudioPath, srtPath: captionSrtPath, outPath: finalPath, aspect, width: w, height: h });
+    // Big on-screen hook card for the first ~2.6s of a Short — the
+    // scroll-stopper faceless Shorts lead with. Uses the (curiosity-optimized)
+    // title as the hook; purely additive and self-falls-back if it can't render.
+    const hookOverlayEnabled = kind === 'short' && config.video?.hook_overlay_enabled !== false;
+    await renderFinalVideo({
+      backgroundClipPath: bgPath, audioPath: fullAudioPath, srtPath: captionSrtPath,
+      outPath: finalPath, aspect, width: w, height: h,
+      hookText: hookOverlayEnabled ? videoScript.title : '',
+      hookSeconds: config.video?.hook_overlay_seconds ?? 2.6
+    });
     entry.steps.assemble = 'ok';
 
     if (kind === 'long') {
@@ -263,7 +273,8 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
       previousStructures: structureHistory.slice(0, -1), // exclude today's own just-recorded pick
       title: videoScript.title,
       description,
-      thumbnailPath: thumbPath
+      thumbnailPath: thumbPath,
+      hasVisionKey: Boolean(process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY)
     });
     entry.qualityGate = { passed: gate.passed, failures: gate.failures, warnings: gate.warnings };
     if (gate.warnings.length > 0) log(`[quality-gate] warnings for "${videoScript.title}": ${gate.warnings.join(' | ')}`);
@@ -383,7 +394,7 @@ async function runFull() {
     date: dateStr,
     topic: research.topic,
     videos: [],
-    strategy: 'shorts-first-food-cloned-voice-2026-08-12',
+    strategy: 'shorts-first-universal-curiosity-cloned-voice-2026-08-13',
     voice: {
       shorts: config.voice?.shorts_provider || config.voice?.provider,
       long: config.voice?.long_provider || config.voice?.provider,
@@ -408,7 +419,7 @@ async function runFull() {
         const shortScript = {
           title: short.title,
           description: short.description,
-          tags: [...new Set([...(short.tags || []), ...(short.hashtags || []), 'Shorts', 'India'])].slice(0, 15),
+          tags: [...new Set([...(short.tags || []), ...(short.hashtags || []), 'Shorts'])].slice(0, 15),
           hashtags: short.hashtags,
           structure: 'story-led',
           segments: [{ text: short.narration, visual_needs: short.visual_needs || [] }]
@@ -432,7 +443,7 @@ async function runFull() {
           const shortScript = {
             title: short.title,
             description: short.description,
-            tags: [...new Set([...(short.tags || []), ...(short.hashtags || []), 'Shorts', 'India'])].slice(0, 15),
+            tags: [...new Set([...(short.tags || []), ...(short.hashtags || []), 'Shorts'])].slice(0, 15),
             hashtags: short.hashtags,
             structure: 'story-led',
             segments: [{ text: short.narration, visual_needs: short.visual_needs || [] }]
