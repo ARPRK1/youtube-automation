@@ -517,8 +517,20 @@ async function runFull() {
   }
 }
 
-if (DRY_RUN) {
-  await runDryRun();
-} else {
-  await runFull();
+const { shutdownChatterbox } = await import('./lib/chatterbox-tts.js');
+try {
+  if (DRY_RUN) {
+    await runDryRun();
+  } else {
+    await runFull();
+  }
+} finally {
+  // CRITICAL: kill the persistent Chatterbox Python server so this process can
+  // exit. Without it the python child keeps the event loop alive and the job
+  // hangs until the CI timeout (confirmed live 2026-08-13: 20 min of real work,
+  // then a 3h40m hang -> job cancelled at the 240-min timeout, marked failed).
+  shutdownChatterbox();
 }
+// Belt-and-suspenders: if any other handle still lingers, don't let the job
+// hang. The manifest/log are already written by this point.
+setTimeout(() => process.exit(process.exitCode || 0), 2000).unref();
