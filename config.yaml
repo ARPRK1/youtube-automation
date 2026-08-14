@@ -18,9 +18,16 @@ video:
 
 voice:
   provider: chatterbox
+  # Shorts voice. 'chatterbox' = the owner's cloned voice (consistent per-
+  # sentence synthesis). To A/B a reliable, perfectly consistent MALE voice
+  # instead, set: shorts_provider: edge-tts  (it will use edge_tts_male_voice).
   shorts_provider: chatterbox
   long_provider: edge-tts
+  # Female neural fallback (long-form + chatterbox failure fallback).
   edge_tts_voice: en-IN-NeerjaNeural
+  # Male voice used when shorts_provider is edge-tts. en-US-ChristopherNeural
+  # is warm/consistent; en-US-AndrewNeural and en-IN-PrabhatNeural also good.
+  edge_tts_male_voice: en-US-ChristopherNeural
   kokoro_voice: af_heart
   reference_sample: voice-sample/reference.wav
   # Curated clean 8–15s slice of the owner's voice, auto-preferred when present.
@@ -89,6 +96,11 @@ media:
   # stock). Closes the old "AI is relevant by construction" gap that let
   # mismatched/random-people AI frames ship unchecked.
   verify_ai_primary: true
+  # Vision-check EVERY AI filler beat too (not just the anchor) and replace any
+  # frame that shows a person with a safe real image. This is the hard
+  # enforcement of never_people across the whole Short (owner QA 2026-08-14:
+  # a random female sketch slipped into a goldfish video via an unchecked beat).
+  verify_ai_beats: true
   # Prefer real stock for concrete objects/places; AI only for diagrams.
   # never_people: hard ban on prominent human faces — enforced on BOTH AI
   # generation AND real stock (vision hasPerson). Random faces = slop.
