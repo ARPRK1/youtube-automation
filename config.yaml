@@ -7,8 +7,11 @@ video:
   long_min_minutes: 6
   long_max_minutes: 12
   shorts_count_per_day: 5
-  # Includes ~2s end hold + sentence pauses (spoken body still ~28–45s).
-  shorts_min_seconds: 28
+  # Includes ~2s end hold + sentence pauses (spoken body still ~26–45s).
+  # 26s floor (was 28): riddle/quiz Shorts land ~27s (question→pause→reveal) and
+  # were being rejected by a hair (27.3s, 27.9s) while padding them hurts the
+  # format. Still safely rejects the real 14–18s stubs.
+  shorts_min_seconds: 26
   shorts_max_seconds: 58
   whiteboard_reveal_enabled: true
   # Big bold on-screen hook card for the first N seconds of a Short (the
