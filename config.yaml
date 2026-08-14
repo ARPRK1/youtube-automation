@@ -114,6 +114,11 @@ media:
   max_visual_beats_long: 14
   # Reuse real stills with different Ken Burns before generating new AI faces.
   prefer_reuse_real_over_ai: true
+  # Animation-first (owner 2026-08-14): prefer real MOTION video b-roll over
+  # still images for each beat; fall back to stills when no clip is found or a
+  # beat can't use one. max_broll_entities caps the extra per-segment sourcing.
+  prefer_video: true
+  max_broll_entities: 4
 
 music:
   enabled: true
