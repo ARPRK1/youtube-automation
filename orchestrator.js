@@ -34,6 +34,10 @@ const SHORT_COUNT_OVERRIDE = shortCountArg ? parseInt(shortCountArg.split('=')[1
 // earlier today.
 const nicheArg = process.argv.find((a) => a.startsWith('--niche='));
 const NICHE_OVERRIDE = nicheArg ? nicheArg.split('=')[1] : null;
+// --topic="..." pins an exact topic (skips the daily research pick) — used to
+// produce a specific flagship video, e.g. a chosen long-form subject.
+const topicArg = process.argv.find((a) => a.startsWith('--topic='));
+const TOPIC_OVERRIDE = topicArg ? topicArg.split('=').slice(1).join('=') : null;
 const config = loadConfig();
 const today = new Date();
 const dateStr = today.toISOString().slice(0, 10);
@@ -452,7 +456,7 @@ async function runFull() {
     log('WARNING: YouTube credentials missing -- finished videos will be parked in ready_to_upload/ only');
   }
 
-  let research = await researchTodaysTopic(today, { forceNicheId: NICHE_OVERRIDE });
+  let research = await researchTodaysTopic(today, { forceNicheId: NICHE_OVERRIDE, forceTopic: TOPIC_OVERRIDE });
   log(`Topic: ${research.topic} (score ${research.score}/10 -- ${research.reason})`);
 
   const manifest = {
