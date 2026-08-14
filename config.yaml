@@ -20,17 +20,17 @@ video:
   hook_overlay_seconds: 2.6
 
 voice:
-  provider: chatterbox
-  # Shorts voice. 'chatterbox' = the owner's cloned voice (consistent per-
-  # sentence synthesis). To A/B a reliable, perfectly consistent MALE voice
-  # instead, set: shorts_provider: edge-tts  (it will use edge_tts_male_voice).
-  shorts_provider: chatterbox
+  provider: edge-tts
+  # Owner 2026-08-14: the clone wasn't landing (inconsistent) — switched Shorts
+  # back to the reliable, perfectly consistent MALE edge-tts voice. The clone
+  # stays available (set shorts_provider: chatterbox to re-enable).
+  shorts_provider: edge-tts
   long_provider: edge-tts
-  # Female neural fallback (long-form + chatterbox failure fallback).
-  edge_tts_voice: en-IN-NeerjaNeural
-  # Male voice used when shorts_provider is edge-tts. en-US-ChristopherNeural
-  # is warm/consistent; en-US-AndrewNeural and en-IN-PrabhatNeural also good.
-  edge_tts_male_voice: en-US-ChristopherNeural
+  # Male voice for BOTH Shorts and long-form. en-US-AndrewNeural is the natural
+  # US male we used originally. Alternatives: en-US-ChristopherNeural (warmer),
+  # en-IN-PrabhatNeural (Indian-English male).
+  edge_tts_voice: en-US-AndrewNeural
+  edge_tts_male_voice: en-US-AndrewNeural
   kokoro_voice: af_heart
   reference_sample: voice-sample/reference.wav
   # Curated clean 8–15s slice of the owner's voice, auto-preferred when present.
@@ -121,7 +121,9 @@ media:
   # still images for each beat; fall back to stills when no clip is found or a
   # beat can't use one. max_broll_entities caps the extra per-segment sourcing.
   prefer_video: true
-  max_broll_entities: 4
+  # One distinct real asset per entity, up to this many (covers a full Top-5/6
+  # list so every item gets its own visual instead of one clip held throughout).
+  max_broll_entities: 6
 
 music:
   enabled: true
