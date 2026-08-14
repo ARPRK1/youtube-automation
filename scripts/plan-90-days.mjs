@@ -101,7 +101,7 @@ const POOL = {
     'Guess the invention from its original patent drawing',
     'The rope-bridge and one flashlight crossing puzzle',
     'The monk who walks up a mountain riddle',
-    'Guess the country from only its road signs',
+    'The twelve coins and one balance-scale puzzle',
     'The three light switches and one bulb puzzle',
     'The lateral-thinking classic with a one-line answer'
   ],
@@ -109,7 +109,7 @@ const POOL = {
     'Why a baker\'s dozen is thirteen, not twelve',
     'The accidental origin of the sandwich',
     'How ketchup started life as medicine',
-    'Why coffee was once banned in several countries',
+    'Why carrots used to be purple, not orange',
     'How the croissant is not actually French',
     'The spice that was once worth more than gold',
     'How pizza margherita got its name',
@@ -134,6 +134,27 @@ function screen(topic) {
   return problems;
 }
 
+const STOP = new Set(['that', 'this', 'with', 'from', 'what', 'when', 'which', 'your', 'their', 'they', 'them', 'have', 'been', 'were', 'will', 'about', 'into', 'over', 'still', 'only', 'most', 'more', 'than', 'then', 'never', 'every', 'some', 'does']);
+function keyWords(t) {
+  return new Set(String(t).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter((w) => w.length > 3 && !STOP.has(w)));
+}
+/** Two topics are near-duplicates if they share >= 45% of their meaningful
+ * words — catches "shortest war ... 40 minutes" style repeats and any two
+ * topics that would read as the same Short. */
+function findNearDuplicates(topics) {
+  const pairs = [];
+  for (let i = 0; i < topics.length; i++) {
+    for (let j = i + 1; j < topics.length; j++) {
+      const a = keyWords(topics[i]); const b = keyWords(topics[j]);
+      if (a.size === 0 || b.size === 0) continue;
+      const shared = [...a].filter((w) => b.has(w)).length;
+      const ratio = shared / Math.min(a.size, b.size);
+      if (ratio >= 0.45) pairs.push({ a: topics[i], b: topics[j], ratio: ratio.toFixed(2) });
+    }
+  }
+  return pairs;
+}
+
 async function main() {
   // Safety screen — must be clean before we emit a plan.
   const all = Object.entries(POOL).flatMap(([pillar, list]) => list.map((t) => ({ pillar, topic: t })));
@@ -147,19 +168,48 @@ async function main() {
   }
   console.log('[plan] SAFETY PASS — 0 anatomical/explicit/off-brand topics.');
 
-  // Build a 90-day schedule with round-robin within each pillar so nothing
-  // repeats until its pillar's pool is exhausted.
-  const cursors = Object.fromEntries(Object.keys(POOL).map((k) => [k, 0]));
-  const days = [];
-  const start = new Date('2026-08-15T00:00:00Z'); // day after today
-  for (let i = 0; i < 90; i++) {
-    const pillar = ROTATION[i % ROTATION.length];
-    const pool = POOL[pillar];
-    const topic = pool[cursors[pillar] % pool.length];
-    cursors[pillar]++;
-    const d = new Date(start.getTime() + i * 86400000);
-    days.push({ day: i + 1, date: d.toISOString().slice(0, 10), pillar, topic });
+  // No-repeat validation: every topic in the bank must be unique AND not a
+  // near-duplicate of another (owner 2026-08-14: 'shortest war', 'ice is
+  // slippery', 'country with a navy' were showing up twice).
+  const titles = all.map((x) => x.topic);
+  const exactDupes = titles.filter((t, i) => titles.indexOf(t) !== i);
+  const nearDupes = findNearDuplicates(titles);
+  if (exactDupes.length > 0 || nearDupes.length > 0) {
+    console.error('[plan] DEDUPE FAIL:');
+    for (const t of new Set(exactDupes)) console.error(`  exact duplicate: "${t}"`);
+    for (const p of nearDupes) console.error(`  near-duplicate (${p.ratio}): "${p.a}"  <->  "${p.b}"`);
+    process.exitCode = 1;
+    return;
   }
+  console.log(`[plan] DEDUPE PASS — all ${titles.length} topics unique, no near-duplicates.`);
+
+  // Schedule: place each UNIQUE topic exactly once, round-robin across pillars
+  // for day-to-day variety. Because every topic is used at most once, the
+  // 90-day schedule has ZERO repeats (previously a per-pillar wrap re-served
+  // the same topic when a pillar was revisited more times than its pool size).
+  const pillars = Object.keys(POOL);
+  const cursors = Object.fromEntries(pillars.map((k) => [k, 0]));
+  const start = new Date('2026-08-15T00:00:00Z'); // day after today
+  const TARGET = Math.min(90, titles.length);
+  const days = [];
+  while (days.length < TARGET) {
+    let placed = 0;
+    for (const pillar of pillars) {
+      if (days.length >= TARGET) break;
+      if (cursors[pillar] < POOL[pillar].length) {
+        const topic = POOL[pillar][cursors[pillar]++];
+        const d = new Date(start.getTime() + days.length * 86400000);
+        days.push({ day: days.length + 1, date: d.toISOString().slice(0, 10), pillar, topic });
+        placed++;
+      }
+    }
+    if (placed === 0) break; // every pool exhausted
+  }
+  const scheduledTitles = days.map((d) => d.topic);
+  if (new Set(scheduledTitles).size !== scheduledTitles.length) {
+    console.error('[plan] INTERNAL ERROR: schedule still contains a repeat'); process.exitCode = 1; return;
+  }
+  console.log(`[plan] scheduled ${days.length} days, every day a distinct topic (0 repeats).`);
 
   // Emit Markdown.
   const byPillar = {};
