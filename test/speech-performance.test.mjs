@@ -17,8 +17,10 @@ test('a reveal starter gets the reveal profile with a pause before it', () => {
   const beats = planSpeechBeats('Most people think glass is a solid. But it is actually a frozen liquid.');
   const reveal = beats.find((b) => b.emphasis === 'reveal');
   assert.ok(reveal, 'expected a reveal beat');
+  // Emphasis now comes from the pause BEFORE the reveal, not a parameter
+  // change (constant params keep the pace consistent).
   assert.ok(reveal.pauseBeforeMs > 0, 'reveal should have a pause before it');
-  assert.ok(reveal.exaggerationDelta > 0, 'reveal should lift exaggeration');
+  assert.equal(reveal.exaggerationDelta, 0);
 });
 
 test('closing CTA line is classified as cta', () => {
@@ -33,18 +35,28 @@ test('a question ending counts as a cta close', () => {
   assert.equal(last.emphasis, 'cta');
 });
 
-test('long sentences are broken at a breath and marked breath', () => {
+test('one beat per whole sentence — long sentences are NOT fragmented', () => {
   const long = 'The city sits in two continents at once, and that single fact reshaped its entire history over many centuries.';
   const beats = planSpeechBeats(long);
-  assert.ok(beats.length >= 2, 'a long sentence should split into >= 2 beats');
-  assert.ok(beats.some((b) => b.emphasis === 'breath'), 'expected a mid-sentence breath beat');
+  // A single sentence stays a single beat (synthesized in one Chatterbox call
+  // for consistent pace) — no mid-sentence splitting.
+  assert.equal(beats.length, 1);
+  assert.ok(!beats.some((b) => b.emphasis === 'breath'));
 });
 
-test('short punchy sentences are not fragmented', () => {
+test('each sentence is its own beat; none are mid-sentence breaths', () => {
   const beats = planSpeechBeats('Ice is slippery. Nobody knows exactly why.');
-  // Two short sentences → two beats, neither a mid-sentence breath.
   assert.equal(beats.length, 2);
   assert.ok(!beats.some((b) => b.emphasis === 'breath'));
+});
+
+test('synthesis params are constant (zero deltas) for consistent pacing', () => {
+  const beats = planSpeechBeats('Here is a fact. But here is the twist. Now you know.');
+  for (const b of beats) {
+    assert.equal(b.exaggerationDelta, 0);
+    assert.equal(b.cfgWeightDelta, 0);
+    assert.equal(b.rateDelta, 0);
+  }
 });
 
 test('no beat is a tiny fragment (<3 words) when the input has real content', () => {
