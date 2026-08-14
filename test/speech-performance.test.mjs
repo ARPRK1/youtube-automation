@@ -47,6 +47,24 @@ test('short punchy sentences are not fragmented', () => {
   assert.ok(!beats.some((b) => b.emphasis === 'breath'));
 });
 
+test('no beat is a tiny fragment (<3 words) when the input has real content', () => {
+  const inputs = [
+    'Glass is not a solid. No. It is an amorphous solid. Wild, right?',
+    'Ok. Here is the twist nobody expects in this whole story today.',
+    'There is a country with no rivers. But it keeps a navy. Guess which.'
+  ];
+  for (const text of inputs) {
+    const beats = planSpeechBeats(text);
+    // A single-beat result can be short (nothing to merge into); multi-beat
+    // results must never contain a 1–2 word Chatterbox call.
+    if (beats.length > 1) {
+      for (const b of beats) {
+        assert.ok(b.text.trim().split(/\s+/).length >= 3, `tiny beat survived: "${b.text}"`);
+      }
+    }
+  }
+});
+
 test('output is deterministic for the same input', () => {
   const line = 'Here is a strange fact. But the reason is stranger. Guess before I tell you.';
   assert.deepEqual(planSpeechBeats(line), planSpeechBeats(line));
