@@ -1,0 +1,558 @@
+<title>ModernMonk 90-Day Plan</title>
+<style>
+  :root{
+    --bg:#f7f8f9; --surface:#ffffff; --ink:#16191d; --muted:#5b636e; --hair:#e4e7ea;
+    --accent:#0e7c86;
+    --p-teal:#1f9e9a; --p-amber:#b9791f; --p-violet:#7c56e0; --p-green:#2f9e44; --p-coral:#d9484a; --p-orange:#c96a10;
+    --good-bg:#e7f6ec; --good-ink:#1c7a3a; --good-line:#bfe6cc;
+    --serif:"Palatino Linotype",Palatino,"Iowan Old Style",Georgia,serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,monospace;
+  }
+  :root:not([data-theme="light"]){ @media (prefers-color-scheme:dark){
+    --bg:#0f1214; --surface:#171b1f; --ink:#e9ebee; --muted:#98a1ab; --hair:#262c31; --accent:#3fc3ce;
+    --p-teal:#38c2bd; --p-amber:#d69b45; --p-violet:#a389f0; --p-green:#54c46a; --p-coral:#ef6d6f; --p-orange:#e39044;
+    --good-bg:#12271a; --good-ink:#5fd07f; --good-line:#1f4a2e;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#0f1214; --surface:#171b1f; --ink:#e9ebee; --muted:#98a1ab; --hair:#262c31; --accent:#3fc3ce;
+    --p-teal:#38c2bd; --p-amber:#d69b45; --p-violet:#a389f0; --p-green:#54c46a; --p-coral:#ef6d6f; --p-orange:#e39044;
+    --good-bg:#12271a; --good-ink:#5fd07f; --good-line:#1f4a2e;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;
+    -webkit-font-smoothing:antialiased;padding:clamp(20px,5vw,64px)}
+  .wrap{max-width:960px;margin:0 auto}
+  header{border-bottom:1px solid var(--hair);padding-bottom:28px;margin-bottom:32px}
+  .eyebrow{font:600 12px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5.5vw,46px);line-height:1.05;
+    margin:14px 0 10px;text-wrap:balance;letter-spacing:-.01em}
+  .lede{color:var(--muted);max-width:60ch;margin:0 0 22px}
+  .meta{display:flex;flex-wrap:wrap;gap:10px 26px;align-items:center}
+  .safe{display:inline-flex;align-items:center;gap:8px;background:var(--good-bg);color:var(--good-ink);
+    border:1px solid var(--good-line);border-radius:999px;padding:7px 14px;font-weight:600;font-size:14px}
+  .safe svg{width:15px;height:15px}
+  .stat{font-size:14px;color:var(--muted)} .stat b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 8px}
+  .chip{font-size:13px;padding:5px 11px;border-radius:999px;border:1px solid color-mix(in oklab,var(--c) 40%,var(--hair));
+    color:var(--ink);background:color-mix(in oklab,var(--c) 12%,var(--surface))}
+  .chip b{color:var(--c);font-variant-numeric:tabular-nums;margin-left:3px}
+  h2{font-family:var(--serif);font-weight:600;font-size:22px;margin:40px 0 14px;letter-spacing:-.01em}
+  .tablewrap{overflow-x:auto;border:1px solid var(--hair);border-radius:12px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;min-width:520px;font-size:14.5px}
+  thead th{position:sticky;top:0;background:var(--surface);text-align:left;font:600 11px/1 var(--sans);
+    letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:13px 16px;border-bottom:1px solid var(--hair)}
+  tbody td{padding:11px 16px;border-bottom:1px solid color-mix(in oklab,var(--hair) 60%,transparent);vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:color-mix(in oklab,var(--accent) 5%,transparent)}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .muted{color:var(--muted)} .topic{max-width:46ch}
+  .tag{font-size:12px;font-weight:600;color:var(--c);white-space:nowrap;
+    background:color-mix(in oklab,var(--c) 12%,transparent);border:1px solid color-mix(in oklab,var(--c) 32%,transparent);
+    padding:2px 9px;border-radius:6px}
+  .bank{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:18px 20px;
+    border-top:3px solid var(--c)}
+  .card h3{font-family:var(--serif);font-size:17px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:baseline}
+  .card .count{font:600 12px/1 var(--mono);color:var(--c);font-variant-numeric:tabular-nums}
+  .card ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+  .card li{font-size:13.5px;color:var(--ink);padding-left:14px;position:relative;line-height:1.4}
+  .card li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:1px;background:var(--c)}
+  footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--hair);color:var(--muted);font-size:13px}
+  code{font-family:var(--mono);font-size:.9em;background:color-mix(in oklab,var(--accent) 10%,transparent);padding:1px 5px;border-radius:4px}
+</style>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">ModernMonk · Curiosity Shorts</div>
+    <h1>90-Day Content Plan</h1>
+    <p class="lede">A screened, ready-to-run topic calendar. Every topic is deliberately physical-world — objects, places, maps, logic — so both the script and the on-screen visuals stay safe.</p>
+    <div class="meta">
+      <span class="safe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Safety pass · 0 anatomical / explicit / off-brand</span>
+      <span class="stat"><b>90</b> days</span>
+      <span class="stat"><b>82</b> unique topics</span>
+      <span class="stat">2026-08-15 → 2026-11-12</span>
+    </div>
+    <div class="legend"><span class="chip" style="--c:var(--p-teal)">World Facts <b>18</b></span><span class="chip" style="--c:var(--p-amber)">Top 5 / 10 <b>18</b></span><span class="chip" style="--c:var(--p-violet)">History Twist <b>18</b></span><span class="chip" style="--c:var(--p-green)">Science <b>18</b></span><span class="chip" style="--c:var(--p-coral)">Riddles &amp; Quiz <b>12</b></span><span class="chip" style="--c:var(--p-orange)">Food Story <b>6</b></span></div>
+  </header>
+
+  <h2>Daily schedule</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Day</th><th>Date</th><th>Pillar</th><th>Lead topic</th></tr></thead>
+      <tbody><tr>
+      <td class="num">1</td>
+      <td class="num muted">2026-08-15</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">The country with no rivers that still keeps a navy</td>
+    </tr><tr>
+      <td class="num">2</td>
+      <td class="num muted">2026-08-16</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 inventions discovered completely by accident</td>
+    </tr><tr>
+      <td class="num">3</td>
+      <td class="num muted">2026-08-17</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The shortest war in history that lasted under 40 minutes</td>
+    </tr><tr>
+      <td class="num">4</td>
+      <td class="num muted">2026-08-18</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why ice is actually slippery, and the answer you were taught is wrong</td>
+    </tr><tr>
+      <td class="num">5</td>
+      <td class="num muted">2026-08-19</td>
+      <td><span class="tag" style="--c:var(--p-coral)">Riddles &amp; Quiz</span></td>
+      <td class="topic">The riddle that 80 percent of adults get wrong on the first try</td>
+    </tr><tr>
+      <td class="num">6</td>
+      <td class="num muted">2026-08-20</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">The only national flag that is not a rectangle</td>
+    </tr><tr>
+      <td class="num">7</td>
+      <td class="num muted">2026-08-21</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 countries that moved their capital city</td>
+    </tr><tr>
+      <td class="num">8</td>
+      <td class="num muted">2026-08-22</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">The Mpemba effect, where hot water can freeze faster than cold</td>
+    </tr><tr>
+      <td class="num">9</td>
+      <td class="num muted">2026-08-23</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The shipping container redesign that remade global trade</td>
+    </tr><tr>
+      <td class="num">10</td>
+      <td class="num muted">2026-08-24</td>
+      <td><span class="tag" style="--c:var(--p-coral)">Riddles &amp; Quiz</span></td>
+      <td class="topic">Guess the country from three impossible clues</td>
+    </tr><tr>
+      <td class="num">11</td>
+      <td class="num muted">2026-08-25</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">Why almost every airplane is painted white</td>
+    </tr><tr>
+      <td class="num">12</td>
+      <td class="num muted">2026-08-26</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 foods that were once banned</td>
+    </tr><tr>
+      <td class="num">13</td>
+      <td class="num muted">2026-08-27</td>
+      <td><span class="tag" style="--c:var(--p-orange)">Food Story</span></td>
+      <td class="topic">Why a baker's dozen is thirteen, not twelve</td>
+    </tr><tr>
+      <td class="num">14</td>
+      <td class="num muted">2026-08-28</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why the sky is blue but sunsets turn red</td>
+    </tr><tr>
+      <td class="num">15</td>
+      <td class="num muted">2026-08-29</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The invention that flopped for decades and then changed everything</td>
+    </tr><tr>
+      <td class="num">16</td>
+      <td class="num muted">2026-08-30</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">Istanbul, the city that sits on two continents</td>
+    </tr><tr>
+      <td class="num">17</td>
+      <td class="num muted">2026-08-31</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 animals with senses humans will never have</td>
+    </tr><tr>
+      <td class="num">18</td>
+      <td class="num muted">2026-09-01</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The phantom island that sat on world maps for a whole century</td>
+    </tr><tr>
+      <td class="num">19</td>
+      <td class="num muted">2026-09-02</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why time seems to speed up as you get older</td>
+    </tr><tr>
+      <td class="num">20</td>
+      <td class="num muted">2026-09-03</td>
+      <td><span class="tag" style="--c:var(--p-coral)">Riddles &amp; Quiz</span></td>
+      <td class="topic">The logic puzzle that has only one honest answer</td>
+    </tr><tr>
+      <td class="num">21</td>
+      <td class="num muted">2026-09-04</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">Why we still use the QWERTY keyboard when better layouts exist</td>
+    </tr><tr>
+      <td class="num">22</td>
+      <td class="num muted">2026-09-05</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 languages with sounds English cannot make</td>
+    </tr><tr>
+      <td class="num">23</td>
+      <td class="num muted">2026-09-06</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why mirrors seem to flip left and right but not up and down</td>
+    </tr><tr>
+      <td class="num">24</td>
+      <td class="num muted">2026-09-07</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The library fire that erased centuries of knowledge</td>
+    </tr><tr>
+      <td class="num">25</td>
+      <td class="num muted">2026-09-08</td>
+      <td><span class="tag" style="--c:var(--p-coral)">Riddles &amp; Quiz</span></td>
+      <td class="topic">Can you spot the hidden pattern before the reveal?</td>
+    </tr><tr>
+      <td class="num">26</td>
+      <td class="num muted">2026-09-09</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">The wood frog that freezes solid every winter and hops away in spring</td>
+    </tr><tr>
+      <td class="num">27</td>
+      <td class="num muted">2026-09-10</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 places on Earth where GPS quietly fails</td>
+    </tr><tr>
+      <td class="num">28</td>
+      <td class="num muted">2026-09-11</td>
+      <td><span class="tag" style="--c:var(--p-orange)">Food Story</span></td>
+      <td class="topic">The accidental origin of the sandwich</td>
+    </tr><tr>
+      <td class="num">29</td>
+      <td class="num muted">2026-09-12</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why a coin flip is far less random than you think</td>
+    </tr><tr>
+      <td class="num">30</td>
+      <td class="num muted">2026-09-13</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The Great Emu War that Australia lost to a flock of birds</td>
+    </tr><tr>
+      <td class="num">31</td>
+      <td class="num muted">2026-09-14</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">Point Nemo, the most remote spot in all the oceans</td>
+    </tr><tr>
+      <td class="num">32</td>
+      <td class="num muted">2026-09-15</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 jobs that did not exist twenty years ago</td>
+    </tr><tr>
+      <td class="num">33</td>
+      <td class="num muted">2026-09-16</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">Wojtek, the bear that was enlisted as a real soldier</td>
+    </tr><tr>
+      <td class="num">34</td>
+      <td class="num muted">2026-09-17</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why metal feels colder than wood at the same temperature</td>
+    </tr><tr>
+      <td class="num">35</td>
+      <td class="num muted">2026-09-18</td>
+      <td><span class="tag" style="--c:var(--p-coral)">Riddles &amp; Quiz</span></td>
+      <td class="topic">A kilo of feathers or a kilo of steel, which is heavier?</td>
+    </tr><tr>
+      <td class="num">36</td>
+      <td class="num muted">2026-09-19</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">Why an octopus has three hearts and blue blood</td>
+    </tr><tr>
+      <td class="num">37</td>
+      <td class="num muted">2026-09-20</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 historical myths almost everyone still believes</td>
+    </tr><tr>
+      <td class="num">38</td>
+      <td class="num muted">2026-09-21</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Petrichor, the real reason rain has a smell</td>
+    </tr><tr>
+      <td class="num">39</td>
+      <td class="num muted">2026-09-22</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">Why old European maps drew California as an island</td>
+    </tr><tr>
+      <td class="num">40</td>
+      <td class="num muted">2026-09-23</td>
+      <td><span class="tag" style="--c:var(--p-coral)">Riddles &amp; Quiz</span></td>
+      <td class="topic">The two-doors, two-guards puzzle explained cleanly</td>
+    </tr><tr>
+      <td class="num">41</td>
+      <td class="num muted">2026-09-24</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">The Dead Sea, and why you simply cannot sink in it</td>
+    </tr><tr>
+      <td class="num">42</td>
+      <td class="num muted">2026-09-25</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 borders that make no sense on a map</td>
+    </tr><tr>
+      <td class="num">43</td>
+      <td class="num muted">2026-09-26</td>
+      <td><span class="tag" style="--c:var(--p-orange)">Food Story</span></td>
+      <td class="topic">How ketchup started life as medicine</td>
+    </tr><tr>
+      <td class="num">44</td>
+      <td class="num muted">2026-09-27</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why popcorn actually pops</td>
+    </tr><tr>
+      <td class="num">45</td>
+      <td class="num muted">2026-09-28</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The con man who "sold" the Eiffel Tower twice</td>
+    </tr><tr>
+      <td class="num">46</td>
+      <td class="num muted">2026-09-29</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">Bir Tawil, the patch of land no country wants to own</td>
+    </tr><tr>
+      <td class="num">47</td>
+      <td class="num muted">2026-09-30</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 everyday objects with a hidden second purpose</td>
+    </tr><tr>
+      <td class="num">48</td>
+      <td class="num muted">2026-10-01</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">How a single weather forecast decided the timing of D-Day</td>
+    </tr><tr>
+      <td class="num">49</td>
+      <td class="num muted">2026-10-02</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why the deep ocean looks blue instead of clear</td>
+    </tr><tr>
+      <td class="num">50</td>
+      <td class="num muted">2026-10-03</td>
+      <td><span class="tag" style="--c:var(--p-coral)">Riddles &amp; Quiz</span></td>
+      <td class="topic">The birthday paradox, why the odds are smaller than you think</td>
+    </tr><tr>
+      <td class="num">51</td>
+      <td class="num muted">2026-10-04</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">Lake Natron, the lake that turns animals to stone</td>
+    </tr><tr>
+      <td class="num">52</td>
+      <td class="num muted">2026-10-05</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 ancient structures we still cannot fully explain</td>
+    </tr><tr>
+      <td class="num">53</td>
+      <td class="num muted">2026-10-06</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why soap bubbles are always perfectly round</td>
+    </tr><tr>
+      <td class="num">54</td>
+      <td class="num muted">2026-10-07</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The richest person in history you have probably never heard of</td>
+    </tr><tr>
+      <td class="num">55</td>
+      <td class="num muted">2026-10-08</td>
+      <td><span class="tag" style="--c:var(--p-coral)">Riddles &amp; Quiz</span></td>
+      <td class="topic">The classic river-crossing puzzle with a clean twist</td>
+    </tr><tr>
+      <td class="num">56</td>
+      <td class="num muted">2026-10-09</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">Why a day on Venus is longer than its year</td>
+    </tr><tr>
+      <td class="num">57</td>
+      <td class="num muted">2026-10-10</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 islands that appear and vanish from maps</td>
+    </tr><tr>
+      <td class="num">58</td>
+      <td class="num muted">2026-10-11</td>
+      <td><span class="tag" style="--c:var(--p-orange)">Food Story</span></td>
+      <td class="topic">Why coffee was once banned in several countries</td>
+    </tr><tr>
+      <td class="num">59</td>
+      <td class="num muted">2026-10-12</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why lightning forks instead of going straight down</td>
+    </tr><tr>
+      <td class="num">60</td>
+      <td class="num muted">2026-10-13</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The message in a bottle that took a century to arrive</td>
+    </tr><tr>
+      <td class="num">61</td>
+      <td class="num muted">2026-10-14</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">The Sargasso Sea, the only sea with no coastline</td>
+    </tr><tr>
+      <td class="num">62</td>
+      <td class="num muted">2026-10-15</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 words that simply do not translate into English</td>
+    </tr><tr>
+      <td class="num">63</td>
+      <td class="num muted">2026-10-16</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The stamp worth more than a mansion</td>
+    </tr><tr>
+      <td class="num">64</td>
+      <td class="num muted">2026-10-17</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why rainbows are curved and never straight</td>
+    </tr><tr>
+      <td class="num">65</td>
+      <td class="num muted">2026-10-18</td>
+      <td><span class="tag" style="--c:var(--p-coral)">Riddles &amp; Quiz</span></td>
+      <td class="topic">Which line is longer? The illusion that fools everyone</td>
+    </tr><tr>
+      <td class="num">66</td>
+      <td class="num muted">2026-10-19</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">Mauna Kea, the mountain taller than Everest if you measure from the base</td>
+    </tr><tr>
+      <td class="num">67</td>
+      <td class="num muted">2026-10-20</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 rivers that flow the "wrong" way</td>
+    </tr><tr>
+      <td class="num">68</td>
+      <td class="num muted">2026-10-21</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why the Moon looks huge on the horizon</td>
+    </tr><tr>
+      <td class="num">69</td>
+      <td class="num muted">2026-10-22</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The clock tower town that refused to change its time</td>
+    </tr><tr>
+      <td class="num">70</td>
+      <td class="num muted">2026-10-23</td>
+      <td><span class="tag" style="--c:var(--p-coral)">Riddles &amp; Quiz</span></td>
+      <td class="topic">The missing-dollar riddle that breaks people</td>
+    </tr><tr>
+      <td class="num">71</td>
+      <td class="num muted">2026-10-24</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">Why the Netherlands keeps building new land out of the sea</td>
+    </tr><tr>
+      <td class="num">72</td>
+      <td class="num muted">2026-10-25</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 abandoned places that nature completely reclaimed</td>
+    </tr><tr>
+      <td class="num">73</td>
+      <td class="num muted">2026-10-26</td>
+      <td><span class="tag" style="--c:var(--p-orange)">Food Story</span></td>
+      <td class="topic">How the croissant is not actually French</td>
+    </tr><tr>
+      <td class="num">74</td>
+      <td class="num muted">2026-10-27</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why honey crystallizes and how to fix it</td>
+    </tr><tr>
+      <td class="num">75</td>
+      <td class="num muted">2026-10-28</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The lighthouse keepers who vanished without a trace</td>
+    </tr><tr>
+      <td class="num">76</td>
+      <td class="num muted">2026-10-29</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">The single road on Earth that it is illegal to walk on</td>
+    </tr><tr>
+      <td class="num">77</td>
+      <td class="num muted">2026-10-30</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 tiny ideas that quietly changed the whole world</td>
+    </tr><tr>
+      <td class="num">78</td>
+      <td class="num muted">2026-10-31</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The one overlooked detail that saved an entire city</td>
+    </tr><tr>
+      <td class="num">79</td>
+      <td class="num muted">2026-11-01</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why a spinning top refuses to fall over</td>
+    </tr><tr>
+      <td class="num">80</td>
+      <td class="num muted">2026-11-02</td>
+      <td><span class="tag" style="--c:var(--p-coral)">Riddles &amp; Quiz</span></td>
+      <td class="topic">Guess the invention from its original patent drawing</td>
+    </tr><tr>
+      <td class="num">81</td>
+      <td class="num muted">2026-11-03</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">The country with no rivers that still keeps a navy</td>
+    </tr><tr>
+      <td class="num">82</td>
+      <td class="num muted">2026-11-04</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 inventions discovered completely by accident</td>
+    </tr><tr>
+      <td class="num">83</td>
+      <td class="num muted">2026-11-05</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">Why ice is actually slippery, and the answer you were taught is wrong</td>
+    </tr><tr>
+      <td class="num">84</td>
+      <td class="num muted">2026-11-06</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The shortest war in history that lasted under 40 minutes</td>
+    </tr><tr>
+      <td class="num">85</td>
+      <td class="num muted">2026-11-07</td>
+      <td><span class="tag" style="--c:var(--p-coral)">Riddles &amp; Quiz</span></td>
+      <td class="topic">The rope-bridge and one flashlight crossing puzzle</td>
+    </tr><tr>
+      <td class="num">86</td>
+      <td class="num muted">2026-11-08</td>
+      <td><span class="tag" style="--c:var(--p-teal)">World Facts</span></td>
+      <td class="topic">The only national flag that is not a rectangle</td>
+    </tr><tr>
+      <td class="num">87</td>
+      <td class="num muted">2026-11-09</td>
+      <td><span class="tag" style="--c:var(--p-amber)">Top 5 / 10</span></td>
+      <td class="topic">Top 5 countries that moved their capital city</td>
+    </tr><tr>
+      <td class="num">88</td>
+      <td class="num muted">2026-11-10</td>
+      <td><span class="tag" style="--c:var(--p-orange)">Food Story</span></td>
+      <td class="topic">The spice that was once worth more than gold</td>
+    </tr><tr>
+      <td class="num">89</td>
+      <td class="num muted">2026-11-11</td>
+      <td><span class="tag" style="--c:var(--p-green)">Science</span></td>
+      <td class="topic">The Mpemba effect, where hot water can freeze faster than cold</td>
+    </tr><tr>
+      <td class="num">90</td>
+      <td class="num muted">2026-11-12</td>
+      <td><span class="tag" style="--c:var(--p-violet)">History Twist</span></td>
+      <td class="topic">The shipping container redesign that remade global trade</td>
+    </tr></tbody>
+    </table>
+  </div>
+
+  <h2>Topic bank by pillar</h2>
+  <div class="bank"><section class="card" style="--c:var(--p-teal)">
+      <h3>World Facts <span class="count">16</span></h3>
+      <ul><li>The country with no rivers that still keeps a navy</li><li>The only national flag that is not a rectangle</li><li>Why almost every airplane is painted white</li><li>Istanbul, the city that sits on two continents</li><li>Why we still use the QWERTY keyboard when better layouts exist</li><li>The wood frog that freezes solid every winter and hops away in spring</li><li>Point Nemo, the most remote spot in all the oceans</li><li>Why an octopus has three hearts and blue blood</li><li>The Dead Sea, and why you simply cannot sink in it</li><li>Bir Tawil, the patch of land no country wants to own</li><li>Lake Natron, the lake that turns animals to stone</li><li>Why a day on Venus is longer than its year</li><li>The Sargasso Sea, the only sea with no coastline</li><li>Mauna Kea, the mountain taller than Everest if you measure from the base</li><li>Why the Netherlands keeps building new land out of the sea</li><li>The single road on Earth that it is illegal to walk on</li></ul>
+    </section><section class="card" style="--c:var(--p-amber)">
+      <h3>Top 5 / 10 <span class="count">16</span></h3>
+      <ul><li>Top 5 inventions discovered completely by accident</li><li>Top 5 countries that moved their capital city</li><li>Top 5 foods that were once banned</li><li>Top 5 animals with senses humans will never have</li><li>Top 5 languages with sounds English cannot make</li><li>Top 5 places on Earth where GPS quietly fails</li><li>Top 5 jobs that did not exist twenty years ago</li><li>Top 5 historical myths almost everyone still believes</li><li>Top 5 borders that make no sense on a map</li><li>Top 5 everyday objects with a hidden second purpose</li><li>Top 5 ancient structures we still cannot fully explain</li><li>Top 5 islands that appear and vanish from maps</li><li>Top 5 words that simply do not translate into English</li><li>Top 5 rivers that flow the "wrong" way</li><li>Top 5 abandoned places that nature completely reclaimed</li><li>Top 5 tiny ideas that quietly changed the whole world</li></ul>
+    </section><section class="card" style="--c:var(--p-violet)">
+      <h3>History Twist <span class="count">16</span></h3>
+      <ul><li>The shortest war in history that lasted under 40 minutes</li><li>The shipping container redesign that remade global trade</li><li>The invention that flopped for decades and then changed everything</li><li>The phantom island that sat on world maps for a whole century</li><li>The library fire that erased centuries of knowledge</li><li>The Great Emu War that Australia lost to a flock of birds</li><li>Wojtek, the bear that was enlisted as a real soldier</li><li>Why old European maps drew California as an island</li><li>The con man who "sold" the Eiffel Tower twice</li><li>How a single weather forecast decided the timing of D-Day</li><li>The richest person in history you have probably never heard of</li><li>The message in a bottle that took a century to arrive</li><li>The stamp worth more than a mansion</li><li>The clock tower town that refused to change its time</li><li>The lighthouse keepers who vanished without a trace</li><li>The one overlooked detail that saved an entire city</li></ul>
+    </section><section class="card" style="--c:var(--p-green)">
+      <h3>Science <span class="count">16</span></h3>
+      <ul><li>Why ice is actually slippery, and the answer you were taught is wrong</li><li>The Mpemba effect, where hot water can freeze faster than cold</li><li>Why the sky is blue but sunsets turn red</li><li>Why time seems to speed up as you get older</li><li>Why mirrors seem to flip left and right but not up and down</li><li>Why a coin flip is far less random than you think</li><li>Why metal feels colder than wood at the same temperature</li><li>Petrichor, the real reason rain has a smell</li><li>Why popcorn actually pops</li><li>Why the deep ocean looks blue instead of clear</li><li>Why soap bubbles are always perfectly round</li><li>Why lightning forks instead of going straight down</li><li>Why rainbows are curved and never straight</li><li>Why the Moon looks huge on the horizon</li><li>Why honey crystallizes and how to fix it</li><li>Why a spinning top refuses to fall over</li></ul>
+    </section><section class="card" style="--c:var(--p-coral)">
+      <h3>Riddles &amp; Quiz <span class="count">12</span></h3>
+      <ul><li>The riddle that 80 percent of adults get wrong on the first try</li><li>Guess the country from three impossible clues</li><li>The logic puzzle that has only one honest answer</li><li>Can you spot the hidden pattern before the reveal?</li><li>A kilo of feathers or a kilo of steel, which is heavier?</li><li>The two-doors, two-guards puzzle explained cleanly</li><li>The birthday paradox, why the odds are smaller than you think</li><li>The classic river-crossing puzzle with a clean twist</li><li>Which line is longer? The illusion that fools everyone</li><li>The missing-dollar riddle that breaks people</li><li>Guess the invention from its original patent drawing</li><li>The rope-bridge and one flashlight crossing puzzle</li></ul>
+    </section><section class="card" style="--c:var(--p-orange)">
+      <h3>Food Story <span class="count">6</span></h3>
+      <ul><li>Why a baker's dozen is thirteen, not twelve</li><li>The accidental origin of the sandwich</li><li>How ketchup started life as medicine</li><li>Why coffee was once banned in several countries</li><li>How the croissant is not actually French</li><li>The spice that was once worth more than gold</li></ul>
+    </section></div>
+
+  <footer>Generated &amp; safety-screened by <code>scripts/plan-90-days.mjs</code> against the pipeline's own NSFW and off-brand filters. Regenerate anytime to reshuffle or extend. The pipeline still produces ~5 Shorts/day; this lists the lead topic per day.</footer>
+</div>

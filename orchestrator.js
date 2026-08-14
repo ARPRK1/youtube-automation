@@ -336,6 +336,71 @@ async function produceVideo({ kind, videoScript, research, aspect }) {
   return entry;
 }
 
+/** Two topics are "distinct" only if they share little vocabulary — stops the
+ * day's Shorts from being near-duplicate angles on the same fact. */
+function topicsAreDistinct(a, b) {
+  const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter((w) => w.length > 3);
+  const wa = new Set(norm(a));
+  const wb = norm(b);
+  if (wb.length === 0 || wa.size === 0) return true;
+  const overlap = wb.filter((w) => wa.has(w)).length;
+  return overlap / Math.max(wa.size, wb.length) < 0.5;
+}
+
+/** Picks up to `count` genuinely different topics for the day's Shorts: the
+ * researched winner first (keeps its sourced facts), then the next best-scoring
+ * DISTINCT candidates. Pulls a backup research pass if the first topic's
+ * candidate pool doesn't yield enough distinct topics. Each becomes ONE Short. */
+async function pickDistinctShortTopics(research, count) {
+  const chosen = [{ topic: research.topic, facts: research.facts || [] }];
+  const consider = (title, facts) => {
+    if (chosen.length >= count || !title) return;
+    if (chosen.some((x) => !topicsAreDistinct(x.topic, title))) return;
+    chosen.push({ topic: title, facts: facts || [] });
+  };
+  for (const c of research.allCandidates || []) consider(c.title, []);
+
+  // Not enough distinct topics from one pillar's pool — widen with a backup pass.
+  if (chosen.length < count) {
+    try {
+      const backup = await researchTodaysTopic(today, {
+        excludeTitles: new Set(chosen.map((t) => t.topic.toLowerCase())),
+        forceNicheId: NICHE_OVERRIDE
+      });
+      consider(backup.topic, backup.facts);
+      for (const c of backup.allCandidates || []) consider(c.title, []);
+    } catch (err) {
+      log(`[shorts] backup topic pass failed: ${err.message}`);
+    }
+  }
+  return chosen.slice(0, count);
+}
+
+/** Produces exactly ONE Short per topic (no same-topic angle-spam). */
+async function produceShortsForTopics(topicList, research, manifest) {
+  for (const { topic, facts } of topicList) {
+    try {
+      const topicResearch = { ...research, topic, facts: facts || [] };
+      const shorts = await writeShortScripts(topicResearch, null, 1);
+      const short = shorts[0];
+      if (!short) { manifest.videos.push({ kind: 'short', title: topic, error: 'no script produced' }); continue; }
+      const shortScript = {
+        title: short.title,
+        description: short.description,
+        tags: [...new Set([...(short.tags || []), ...(short.hashtags || []), 'Shorts'])].slice(0, 15),
+        hashtags: short.hashtags,
+        structure: 'story-led',
+        segments: [{ text: short.narration, visual_needs: short.visual_needs || [] }]
+      };
+      const entry = await produceVideo({ kind: 'short', videoScript: shortScript, research: topicResearch, aspect: 'vertical' });
+      manifest.videos.push(entry);
+    } catch (err) {
+      log(`FAILED (short "${topic}"): ${err.message}`);
+      manifest.videos.push({ kind: 'short', title: topic, error: err.message });
+    }
+  }
+}
+
 /** Attempts long_count_per_day scripts against one research/topic. Returns
  * { longScripts, videos } -- videos includes an entry (success or error)
  * for every attempt, same shape as the manifest expects. `longScripts` only
@@ -412,49 +477,19 @@ async function runFull() {
   // ------------------------------------------------------------------
   if (!LONG_ONLY) {
     const shortCount = SHORT_COUNT_OVERRIDE ?? config.video?.shorts_count_per_day ?? 5;
-    log(`Shorts-first: generating ${shortCount} Shorts from research (no long dependency)`);
-    try {
-      const shorts = await writeShortScripts(research, null, shortCount);
-      for (const short of shorts) {
-        const shortScript = {
-          title: short.title,
-          description: short.description,
-          tags: [...new Set([...(short.tags || []), ...(short.hashtags || []), 'Shorts'])].slice(0, 15),
-          hashtags: short.hashtags,
-          structure: 'story-led',
-          segments: [{ text: short.narration, visual_needs: short.visual_needs || [] }]
-        };
-        const entry = await produceVideo({ kind: 'short', videoScript: shortScript, research, aspect: 'vertical' });
-        manifest.videos.push(entry);
-      }
-    } catch (err) {
-      log(`FAILED (standalone shorts batch): ${err.message}`);
-      // One backup topic for Shorts if the first topic is unusable
-      try {
-        const backup = await researchTodaysTopic(today, {
-          excludeTitles: new Set([research.topic.toLowerCase()]),
-          forceNicheId: NICHE_OVERRIDE
-        });
-        log(`Shorts backup topic: ${backup.topic} (score ${backup.score}/10)`);
-        research = backup;
-        manifest.topic = research.topic;
-        const shorts = await writeShortScripts(research, null, shortCount);
-        for (const short of shorts) {
-          const shortScript = {
-            title: short.title,
-            description: short.description,
-            tags: [...new Set([...(short.tags || []), ...(short.hashtags || []), 'Shorts'])].slice(0, 15),
-            hashtags: short.hashtags,
-            structure: 'story-led',
-            segments: [{ text: short.narration, visual_needs: short.visual_needs || [] }]
-          };
-          const entry = await produceVideo({ kind: 'short', videoScript: shortScript, research, aspect: 'vertical' });
-          manifest.videos.push(entry);
-        }
-      } catch (err2) {
-        log(`FAILED (shorts backup): ${err2.message}`);
-        manifest.videos.push({ kind: 'short', error: err2.message });
-      }
+    // ONE Short per DISTINCT topic — NOT N Shorts from one topic (owner
+    // 2026-08-14: thin single-fact topics like "the only non-rectangular flag"
+    // were being turned into 5 near-identical Shorts because the batch asked
+    // for "5 different angles" on the same fact, and a one-fact topic has only
+    // one angle). Each Short now covers a genuinely different topic, so the
+    // day's Shorts stop feeling like reworded repeats.
+    let topicList = await pickDistinctShortTopics(research, shortCount);
+    log(`Shorts-first: ${topicList.length} Shorts, one per distinct topic:`);
+    topicList.forEach((t, i) => log(`  ${i + 1}. ${t.topic}`));
+    await produceShortsForTopics(topicList, research, manifest);
+    if (topicList.length === 0) {
+      log('FAILED (no distinct short topics found)');
+      manifest.videos.push({ kind: 'short', error: 'no distinct short topics found' });
     }
   }
 
