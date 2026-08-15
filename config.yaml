@@ -109,6 +109,11 @@ media:
   # generation AND real stock (vision hasPerson). Random faces = slop.
   mode: hybrid
   never_people: true
+  # Allow RELEVANT real people in REAL stock/photos (e.g. a real photo of the
+  # named subject when the concept is about them — "Messi jersey"). AI-generated
+  # people stay banned (random/slop faces), and NSFW is always blocked. Set
+  # false to go back to zero people of any kind in real media too.
+  allow_real_people: true
   prefer_real_stock: true
   # Human-made look: fewer AI style thrash cuts; longer holds on real photos.
   visual_beat_seconds_short: 3.8
