@@ -394,7 +394,7 @@ async function produceShortsForTopics(topicList, research, manifest) {
         tags: [...new Set([...(short.tags || []), ...(short.hashtags || []), 'Shorts'])].slice(0, 15),
         hashtags: short.hashtags,
         structure: 'story-led',
-        segments: [{ text: short.narration, visual_needs: short.visual_needs || [], shots: short.shots || [] }]
+        segments: [{ text: short.narration, visual_needs: short.visual_needs || [], storyboard: short.storyboard || null }]
       };
       const entry = await produceVideo({ kind: 'short', videoScript: shortScript, research: topicResearch, aspect: 'vertical' });
       manifest.videos.push(entry);
