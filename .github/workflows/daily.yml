@@ -128,12 +128,18 @@ jobs:
 
       - name: Generate and upload today's videos
         run: |
-          ARGS=""
-          if [ "${{ inputs.long_only }}" = "true" ]; then ARGS="$ARGS --long-only"; fi
-          if [ -n "${{ inputs.long_count }}" ]; then ARGS="$ARGS --long-count=${{ inputs.long_count }}"; fi
-          if [ -n "${{ inputs.short_count }}" ]; then ARGS="$ARGS --short-count=${{ inputs.short_count }}"; fi
-          if [ -n "${{ inputs.niche }}" ]; then ARGS="$ARGS --niche=${{ inputs.niche }}"; fi
-          if [ -n "${{ inputs.topic }}" ]; then ARGS="$ARGS --topic=${{ inputs.topic }}"; fi
+          # Build args as a bash ARRAY and read the free-text inputs from env
+          # vars (never interpolate ${{ inputs.* }} directly into the command) —
+          # otherwise a multi-word topic like "10 places on Earth..." splits on
+          # spaces and only "--topic=10" reaches node (confirmed live 2026-08-18:
+          # the flagship got written about the number 10). Quoting via the array
+          # keeps the whole topic/niche intact.
+          ARGS=()
+          if [ "${{ inputs.long_only }}" = "true" ]; then ARGS+=(--long-only); fi
+          if [ -n "${{ inputs.long_count }}" ]; then ARGS+=("--long-count=${{ inputs.long_count }}"); fi
+          if [ -n "${{ inputs.short_count }}" ]; then ARGS+=("--short-count=${{ inputs.short_count }}"); fi
+          if [ -n "$INPUT_NICHE" ]; then ARGS+=("--niche=$INPUT_NICHE"); fi
+          if [ -n "$INPUT_TOPIC" ]; then ARGS+=("--topic=$INPUT_TOPIC"); fi
 
           # A scheduled run gets exactly one attempt; every failure examined
           # in the 2026-08-02 RCA (India-trends leak, thin-topic repetition,
@@ -151,20 +157,24 @@ jobs:
           # under the time it takes to reach the first possible upload.
           SAFE_RETRY_WINDOW_SECONDS=600
           START=$(date +%s)
-          if node orchestrator.js $ARGS; then
+          if node orchestrator.js "${ARGS[@]}"; then
             exit 0
           fi
           ELAPSED=$(( $(date +%s) - START ))
           if [ "$ELAPSED" -lt "$SAFE_RETRY_WINDOW_SECONDS" ]; then
             echo "First attempt failed after ${ELAPSED}s (under the ${SAFE_RETRY_WINDOW_SECONDS}s safe-retry window) -- retrying once."
             sleep 60
-            node orchestrator.js $ARGS
+            node orchestrator.js "${ARGS[@]}"
           else
             echo "First attempt failed after ${ELAPSED}s -- past the safe-retry window, not retrying: a late failure may have already uploaded, and a blind retry risks a duplicate upload."
             exit 1
           fi
         env:
           PYTHON_BIN: python
+          # Free-text inputs via env (quoted in the array above) so multi-word
+          # values survive intact.
+          INPUT_TOPIC: ${{ inputs.topic }}
+          INPUT_NICHE: ${{ inputs.niche }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
