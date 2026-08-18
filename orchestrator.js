@@ -508,9 +508,20 @@ async function runFull() {
 
     const triedTitles = new Set([research.topic.toLowerCase()]);
     for (let attempt = 1; longScripts.length === 0 && attempt <= 1; attempt++) {
-      log(`No long video on "${research.topic}" -- one backup topic for long-form only`);
       try {
-        const backupResearch = await researchTodaysTopic(today, { excludeTitles: triedTitles, forceNicheId: NICHE_OVERRIDE });
+        // When a topic is PINNED (--topic), a failed first attempt is usually a
+        // transient (free-tier LLM burst) — retry the SAME topic instead of
+        // switching to a different one, or the flagship ends up off-topic
+        // (confirmed live 2026-08-18: a quota blip made it swap to a random
+        // backup topic). Only switch topics for the un-pinned daily rotation.
+        let backupResearch;
+        if (TOPIC_OVERRIDE) {
+          log(`No long video yet on pinned "${research.topic}" -- retrying the SAME pinned topic`);
+          backupResearch = await researchTodaysTopic(today, { forceTopic: TOPIC_OVERRIDE });
+        } else {
+          log(`No long video on "${research.topic}" -- one backup topic for long-form only`);
+          backupResearch = await researchTodaysTopic(today, { excludeTitles: triedTitles, forceNicheId: NICHE_OVERRIDE });
+        }
         log(`Long backup topic: ${backupResearch.topic} (score ${backupResearch.score}/10 -- ${backupResearch.reason})`);
         triedTitles.add(backupResearch.topic.toLowerCase());
         const retry = await attemptLongScripts(backupResearch);
