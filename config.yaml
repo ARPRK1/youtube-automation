@@ -4,8 +4,11 @@
 
 video:
   long_count_per_day: 0
-  long_min_minutes: 6
-  long_max_minutes: 12
+  # Target a tight, watchable 4–6 min premium long (owner wants ~4–5 min, not a
+  # 6–12 min doc). The flagship 'impossible places' script came in at ~6 min /
+  # 927 words and was wrongly rejected by the old 6-min / 935-word floor.
+  long_min_minutes: 4
+  long_max_minutes: 8
   shorts_count_per_day: 5
   # Includes ~2s end hold + sentence pauses (spoken body still ~26–45s).
   # 26s floor (was 28): riddle/quiz Shorts land ~27s (question→pause→reveal) and
@@ -79,8 +82,8 @@ topics:
     reddit: false
 
 script:
-  min_long_words: 1100
-  target_long_words: 1500
+  min_long_words: 650
+  target_long_words: 1000
   # Fewer words: slower clone + pauses + 2s end hold still fit under 50s.
   # ~70–95 words at ~140 wpm spoken + pauses ≈ 32–45s + 2s hold.
   min_short_words: 70
