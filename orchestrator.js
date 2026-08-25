@@ -456,7 +456,21 @@ async function runFull() {
     log('WARNING: YouTube credentials missing -- finished videos will be parked in ready_to_upload/ only');
   }
 
-  let research = await researchTodaysTopic(today, { forceNicheId: NICHE_OVERRIDE, forceTopic: TOPIC_OVERRIDE });
+  // A long-only run (the alternate-day long task) pulls its topic from the
+  // dedicated "Amazing Places & Earth's Wonders" long-form bank (Top-10 list
+  // videos — high CTR + strong visuals), unless a --topic is explicitly pinned.
+  let effectiveForceTopic = TOPIC_OVERRIDE;
+  if (LONG_ONLY && !TOPIC_OVERRIDE) {
+    const { pickLongTopic } = await import('./niches-long.js');
+    let recent = [];
+    try {
+      const hist = JSON.parse(await readFile(path.join(config.paths?.runs_dir || 'runs', 'topic-history.json'), 'utf-8'));
+      recent = hist.map((h) => h.topic).filter(Boolean);
+    } catch { /* no history yet */ }
+    effectiveForceTopic = pickLongTopic(today, recent);
+    log(`Long-only: picked long-form topic "${effectiveForceTopic}" from the Earth's Wonders bank`);
+  }
+  let research = await researchTodaysTopic(today, { forceNicheId: NICHE_OVERRIDE, forceTopic: effectiveForceTopic });
   log(`Topic: ${research.topic} (score ${research.score}/10 -- ${research.reason})`);
 
   const manifest = {
@@ -515,9 +529,9 @@ async function runFull() {
         // (confirmed live 2026-08-18: a quota blip made it swap to a random
         // backup topic). Only switch topics for the un-pinned daily rotation.
         let backupResearch;
-        if (TOPIC_OVERRIDE) {
-          log(`No long video yet on pinned "${research.topic}" -- retrying the SAME pinned topic`);
-          backupResearch = await researchTodaysTopic(today, { forceTopic: TOPIC_OVERRIDE });
+        if (effectiveForceTopic) {
+          log(`No long video yet on "${research.topic}" -- retrying the SAME pinned/long topic`);
+          backupResearch = await researchTodaysTopic(today, { forceTopic: effectiveForceTopic });
         } else {
           log(`No long video on "${research.topic}" -- one backup topic for long-form only`);
           backupResearch = await researchTodaysTopic(today, { excludeTitles: triedTitles, forceNicheId: NICHE_OVERRIDE });
